@@ -1,9 +1,12 @@
-#from nicegui import ui
-#from gui.app import create_app
+from nicegui import ui
+from gui.app import create_app
 
-#create_app()
-#ui.run(title='Wave2Light', port=8081)  # port anpassen falls 8080 blockiert ist
+create_app()
+ui.run(title='Wave2Light', port=8081)  # port anpassen falls 8080 blockiert ist
 
+
+
+"""
 import time
 from engine.light_engine import LightEngine
 from projects.projects_io import load_project, load_fixtures_from_json, apply_scene
@@ -24,5 +27,7 @@ try:
         time.sleep(1/40)
 except KeyboardInterrupt:
     print("Schleife beendet")
+
+    """
 
  

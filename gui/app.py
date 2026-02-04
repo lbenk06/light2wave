@@ -1,16 +1,13 @@
 from nicegui import ui
+from gui.state import state
+from gui.tabs import live, audio, fixtures, traverse, scenes, dmx
 
-from gui.tabs import (
-    live,
-    audio,
-    fixtures,
-    traverse,
-    scenes,
-    dmx,
-)
 
 def create_app():
-    ui.page_title('Wave2Light')
+    ui.page_title('Light2Wave')
+
+    state.load_project("projects/my_show.json")
+    state.load_events()
 
     with ui.tabs().classes('w-full') as tabs:
         tab_live = ui.tab('LIVE')
@@ -20,7 +17,7 @@ def create_app():
         tab_scenes = ui.tab('Szenen')
         tab_dmx = ui.tab('DMX')
 
-    with ui.tab_panels(tabs, value=tab_audio).classes('w-full'):
+    with ui.tab_panels(tabs, value=tab_live).classes('w-full'):
             
         with ui.tab_panel(tab_live):
             live.create()
@@ -39,3 +36,5 @@ def create_app():
 
         with ui.tab_panel(tab_dmx):
             dmx.create()
+
+    ui.timer(1/40, state.render)

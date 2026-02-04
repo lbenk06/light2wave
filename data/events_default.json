@@ -1,0 +1,24 @@
+[
+  {
+    "name": "ALL OFF",
+    "roles": {
+      "dimmer": 0
+    }
+  },
+  {
+    "name": "ALL RED",
+    "roles": {
+      "red": 1,
+      "green": 0,
+      "blue": 0,
+      "dimmer": 1
+    }
+  },
+  {
+    "name": "BLINDER HIT",
+    "roles": {
+      "white": 1,
+      "dimmer": 1
+    }
+  }
+]

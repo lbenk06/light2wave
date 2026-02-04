@@ -5,8 +5,11 @@ class Fixture:
         self.id=fixture_id
         self.profile=profile
         self.address=address
-        self.values={ch["role"]: 0.0 for ch in profile["channels"]}
-
+        self.values={}
+        for channel in profile["channels"]:
+            role=channel["role"]
+            if role != "unused":
+                self.values[role]=0.0
     
     def set(self, role, value):
         if role in self.values:
@@ -15,6 +18,12 @@ class Fixture:
     def get(self, role):
         return self.values.get(role, 0.0)
     
+    def has(self, role):
+        return role in self.values
+    @property
+    def roles(self):
+        return self.values.keys()
+    
     #werte zwischen 0 und 255 ins universe schreiben
     def render(self, universe):
         base=self.address-1
@@ -22,3 +31,18 @@ class Fixture:
             role=ch["role"]
             universe[base+i]=int(self.values.get(role, 0.0)*255)
         
+    #gibt aktuelle farbe für livebild als rgb-tupel zurück (wenn weiss vorhanden ist wird es addiert)
+    def get_color(self):
+        
+        dim=self.values.get("dimmer",1.0)
+        r=int(self.values.get("red",0.0)*dim*255)
+        g=int(self.values.get("green",0.0)*dim*255)
+        b=int(self.values.get("blue",0.0)*dim*255)
+
+        if self.has("white"):
+            w=int(self.values.get("white",0.0)*dim*255)
+            r=min(255, r+w)
+            g=min(255, g+w)
+            b=min(255, b+w)
+        
+        return (r,g,b)
