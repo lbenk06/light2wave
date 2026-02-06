@@ -1,10 +1,14 @@
 class Fixture:
 
     #fixture id: name vom gerät, profile: welche kanäle und was macht jeder (dictionary mit den kanal definitionen), adress: startadresse
-    def __init__(self, fixture_id, profile, address):  
+    def __init__(self, fixture_id, profile, address, x=0, y=0):  
         self.id=fixture_id
         self.profile=profile
         self.address=address
+        self.x=x
+        self.y=y
+
+
         self.values={}
         for channel in profile["channels"]:
             role=channel["role"]

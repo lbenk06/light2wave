@@ -5,12 +5,34 @@ from gui.state import state
 def create():
     ui.label('Traverse').classes('text-h4')
 
-    container=ui.row()
+    with ui.element('div').style('position: relative; width: 800px; height: 300px; margin: auto;') as stage:
 
-    def update():
-        container.clear()
-        for f in state.engine.fixtures:
-            color=f.get_color()
-            ui.label('⬤').style(f'color: rgb({color[0]},{color[1]},{color[2]}); font-size: 40px')
-        
-    ui.timer(0.1, update)
+        ui.image('/assets/traverse.png').style('position: absolute; top: 0; left: 0; width: 100%; height: 100%;')
+
+        fixture_elements={}
+
+        for fixture in state.engine.fixtures:
+            r,g,b=fixture.get_color()
+
+            el = ui.element('div').style(
+                f'''
+                position: absolute;
+                left: {fixture.x}px;
+                top: {fixture.y}px;
+                width: 24px;
+                height: 24px;
+                border-radius: 50%;
+                background-color: rgb({r},{g},{b});
+                border: 2px solid black;
+                '''
+            )
+
+            fixture_elements[fixture]=el
+
+    def update_colors():
+        for fixture, el in fixture_elements.items():
+            r,g,g=fixture.get_color()
+            el.style(
+                f'background-color: rgb({r},{g},{b});'
+            )
+    ui.timer(1 / 20, update_colors)  #20fps
