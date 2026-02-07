@@ -1,44 +1,98 @@
 {
-  "project_name": "Mein Showprojekt",
-  "fixtures": [
-    {"id": "par_1", "profile": "led_par_6ch", "address": 1},
-    {"id": "fluter_1", "profile": "led_fluter_8ch", "address": 10},
-    {"id": "moving_1", "profile": "moving_head_9ch", "address": 20}
-  ],
-  "banks": [
-    {
-      "name": "Bank 1",
-      "scenes": [
+    "fixtures": [
         {
-          "name": "Intro Rot",
-          "values": {
-            "par_1": {"dimmer":0.8,"red":1.0,"green":0.0,"blue":0.0},
-            "fluter_1": {"dimmer":0.6,"warm_white":1.0},
-            "moving_1": {"dimmer":0.9,"red":1.0,"green":0.0,"blue":0.0,"pan":0.5,"tilt":0.5}
-          }
+            "id": "par_1",
+            "profile": "led_par_6ch",
+            "x": 0,
+            "y": 0,
+            "address": 1,
+            "values": {
+                "dimmer": 0.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "strobe": 0.0
+            }
         },
         {
-          "name": "Blau Szene",
-          "values": {
-            "par_1": {"dimmer":0.8,"red":0.0,"green":0.0,"blue":1.0},
-            "fluter_1": {"dimmer":0.6,"warm_white":0.5},
-            "moving_1": {"dimmer":0.9,"red":0.0,"green":0.0,"blue":1.0,"pan":0.7,"tilt":0.3}
-          }
-        }
-      ]
-    },
-    {
-      "name": "Bank 2",
-      "scenes": [
+            "id": "fluter_1",
+            "profile": "led_fluter_8ch",
+            "x": 0,
+            "y": 0,
+            "address": 10,
+            "values": {
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "white": 0.0,
+                "strobe": 0.0,
+                "dimmer": 0.0
+            }
+        },
         {
-          "name": "Strobe Test",
-          "values": {
-            "par_1": {"dimmer":0.8,"strobe":1.0},
-            "fluter_1": {"dimmer":0.5,"strobe":1.0},
-            "moving_1": {"dimmer":0.9,"strobe":1.0}
-          }
+            "id": "moving_1",
+            "profile": "moving_head_9ch",
+            "x": 0,
+            "y": 0,
+            "address": 20,
+            "values": {
+                "dimmer": 0.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "white": 0.0,
+                "pan": 0.0,
+                "tilt": 0.0,
+                "strobe": 0.0,
+                "speed": 0.0
+            }
+        },
+        {
+            "id": "par_1",
+            "profile": "led_par_6ch",
+            "x": 0,
+            "y": 0,
+            "address": 1,
+            "values": {
+                "dimmer": 0.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "strobe": 0.0
+            }
+        },
+        {
+            "id": "fluter_1",
+            "profile": "led_fluter_8ch",
+            "x": 0,
+            "y": 0,
+            "address": 10,
+            "values": {
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "white": 0.0,
+                "strobe": 0.0,
+                "dimmer": 0.0
+            }
+        },
+        {
+            "id": "moving_1",
+            "profile": "moving_head_9ch",
+            "x": 0,
+            "y": 0,
+            "address": 20,
+            "values": {
+                "dimmer": 0.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "white": 0.0,
+                "pan": 0.0,
+                "tilt": 0.0,
+                "strobe": 0.0,
+                "speed": 0.0
+            }
         }
-      ]
-    }
-  ]
+    ]
 }

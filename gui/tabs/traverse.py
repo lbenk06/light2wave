@@ -1,6 +1,9 @@
 from nicegui import ui
 from gui.state import state
+from projects.projects_io import save_project, load_project
+import os
 
+# Statusvariablen für das Platzieren eines neuen Fixtures
 placing_profile = None
 placing_name = None
 placing_address = None
@@ -14,18 +17,29 @@ def create():
     # TRAVERSE-BEREICH
     # =============================
     with ui.element('div').style(
-        'position: relative; width: 1200px; height: 600px; margin: auto; background: #111;'
+        'position: relative; width: 1200px; height: 800px; margin: auto; background: #111;'
     ) as stage:
 
-        # Hintergrundbild
+        # Hintergrundbild (pointer-events none, damit Klicks durchgehen)
         ui.image('/static/traverse.png').style(
-            'width: 100%; height: 100%; object-fit: contain;'
+            'width: 100%; height: 100%; object-fit: contain; pointer-events: none;'
         )
 
         fixture_elements = {}
 
-        # Funktion: Fixture-Kreise + Labels zeichnen
+        # =============================
+        # Fixture löschen
+        # =============================
+        def remove_fixture(fixture):
+            if ui.confirm(f'Soll {fixture.id} gelöscht werden?'):
+                state.engine.fixtures.remove(fixture)
+                redraw_fixtures()
+
+        # =============================
+        # Fixtures zeichnen
+        # =============================
         def redraw_fixtures():
+            # alte Elemente löschen
             for el in fixture_elements.values():
                 el.delete()
             fixture_elements.clear()
@@ -33,12 +47,7 @@ def create():
             for fixture in state.engine.fixtures:
                 r, g, b = fixture.get_color()
 
-                # Kreis + Klick zum Löschen
-                def on_fixture_click(f=fixture):
-                    if ui.confirm(f'Soll {f.id} gelöscht werden?'):
-                        state.engine.fixtures.remove(f)
-                        redraw_fixtures()
-
+                # Kreis
                 el = ui.element('div').style(f'''
                     position: absolute;
                     left: {fixture.x}px;
@@ -49,9 +58,9 @@ def create():
                     background-color: rgb({r},{g},{b});
                     border: 2px solid black;
                     cursor: pointer;
-                ''').on('click', on_fixture_click)
+                ''').on('click', lambda e, f=fixture: remove_fixture(f))
 
-                # Label unter Kreis: Name + Adresse
+                # Name + Adresse unter Kreis
                 ui.label(f'{fixture.id}\nAddr: {fixture.address}').style(f'''
                     position: absolute;
                     left: {fixture.x - 20}px;
@@ -61,6 +70,7 @@ def create():
                     color: white;
                     font-size: 12px;
                 ''')
+
                 fixture_elements[fixture] = el
 
         redraw_fixtures()
@@ -76,13 +86,13 @@ def create():
             x = int(e.args['offsetX'])
             y = int(e.args['offsetY'])
 
-            # Nächste freie Adresse, falls nicht manuell angegeben
-            if placing_address is None:
-                placing_address = state.engine.next_free_address(state.engine.get_profile(placing_profile))
-
-            # Name vergeben
+            # Name und Adresse setzen
             if not placing_name:
                 placing_name = f'{placing_profile}_{len(state.engine.fixtures)+1}'
+            if placing_address is None:
+                placing_address = state.engine.next_free_address(
+                    state.engine.get_profile(placing_profile)
+                )
 
             # Fixture erstellen
             fixture = state.engine.create_fixture(
@@ -93,7 +103,7 @@ def create():
                 address=placing_address
             )
 
-            # Reset für nächsten Add-Vorgang
+            # Reset der Statusvariablen
             placing_profile = None
             placing_name = None
             placing_address = None
@@ -129,7 +139,7 @@ def create():
         # Name eingeben
         name_input = ui.input(label='Gerätename', value='')
 
-        # Button zum Hinzufügen
+        # Gerät platzieren starten
         def start_placing():
             global placing_profile, placing_name, placing_address
             placing_profile = profile_select.value
@@ -138,17 +148,39 @@ def create():
 
         ui.button('Gerät hinzufügen', on_click=start_placing)
 
+        # =============================
         # Projekt speichern
+        # =============================
         def save_current_project():
-            from projects.projects_io import save_project
-            save_project(state.engine, 'projects/my_show.json')
+            if not os.path.exists('projects'):
+                os.makedirs('projects')
+
+            save_project(state.engine, "projects/my_show.json")
+            ui.notify("Projekt gespeichert", color="green")
+
         ui.button('Projekt speichern', on_click=save_current_project)
+
+        # Projekt laden
+        def load_current_project():
+            try:
+                project_data = load_project("projects/my_show.json")
+                state.engine.fixtures.clear()
+                from projects.projects_io import load_fixtures_from_json
+                load_fixtures_from_json(project_data.get("fixtures", []), state.engine)
+                redraw_fixtures()
+                ui.notify("Projekt geladen", color="green")
+            except FileNotFoundError:
+                ui.notify("Keine gespeicherte Show gefunden", color="red")
+
+        ui.button('Projekt laden', on_click=load_current_project)
 
         # Projekt löschen
         def delete_project():
-            if ui.confirm('Gesamtes Projekt löschen?'):
+            if ui.confirm("Gesamtes Projekt löschen?"):
                 state.engine.fixtures.clear()
                 redraw_fixtures()
+                ui.notify("Projekt gelöscht", color="red")
+
         ui.button('Projekt löschen', on_click=delete_project)
 
     # =============================

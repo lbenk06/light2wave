@@ -19,9 +19,10 @@ def save_project(engine, filename):
             "x": f.x,
             "y": f.y,
             "address": f.address,
-            "values": f.values
+            "values": f.values  # aktuelle DMX-Werte
         })
 
+    # Datei schreiben
     with open(filename, 'w') as f:
         json.dump(project_dict, f, indent=4)
     print(f"Projekt gespeichert: {filename}")
