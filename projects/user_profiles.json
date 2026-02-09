@@ -1,0 +1,16 @@
+{
+    "blinder": {
+        "profile_id": "blinder",
+        "name": "blinder",
+        "channels": [
+            {
+                "name": "Dimmer",
+                "role": "dimmer"
+            },
+            {
+                "name": "White",
+                "role": "white"
+            }
+        ]
+    }
+}

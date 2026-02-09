@@ -4,6 +4,7 @@ class Fixture:
     def __init__(self, fixture_id, profile, address, x=0, y=0):  
         self.id=fixture_id
         self.profile=profile
+        self.profile_id=profile.get("profile_id","unknown")
         self.address=address
         self.x=x
         self.y=y

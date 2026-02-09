@@ -1,97 +1,72 @@
 {
     "fixtures": [
         {
-            "id": "par_1",
+            "id": "par1",
             "profile": "led_par_6ch",
-            "x": 0,
-            "y": 0,
+            "x": 559,
+            "y": 66,
             "address": 1,
             "values": {
-                "dimmer": 0.0,
-                "red": 0.0,
+                "dimmer": 1.0,
+                "red": 1.0,
                 "green": 0.0,
                 "blue": 0.0,
                 "strobe": 0.0
             }
         },
         {
-            "id": "fluter_1",
-            "profile": "led_fluter_8ch",
-            "x": 0,
-            "y": 0,
-            "address": 10,
-            "values": {
-                "red": 0.0,
-                "green": 0.0,
-                "blue": 0.0,
-                "white": 0.0,
-                "strobe": 0.0,
-                "dimmer": 0.0
-            }
-        },
-        {
-            "id": "moving_1",
-            "profile": "moving_head_9ch",
-            "x": 0,
-            "y": 0,
-            "address": 20,
-            "values": {
-                "dimmer": 0.0,
-                "red": 0.0,
-                "green": 0.0,
-                "blue": 0.0,
-                "white": 0.0,
-                "pan": 0.0,
-                "tilt": 0.0,
-                "strobe": 0.0,
-                "speed": 0.0
-            }
-        },
-        {
-            "id": "par_1",
+            "id": "par2",
             "profile": "led_par_6ch",
-            "x": 0,
-            "y": 0,
-            "address": 1,
+            "x": 752,
+            "y": 62,
+            "address": 7,
             "values": {
-                "dimmer": 0.0,
-                "red": 0.0,
+                "dimmer": 1.0,
+                "red": 1.0,
                 "green": 0.0,
                 "blue": 0.0,
                 "strobe": 0.0
             }
         },
         {
-            "id": "fluter_1",
+            "id": "flood1",
             "profile": "led_fluter_8ch",
-            "x": 0,
-            "y": 0,
-            "address": 10,
+            "x": 355,
+            "y": 61,
+            "address": 13,
             "values": {
-                "red": 0.0,
+                "red": 1.0,
                 "green": 0.0,
                 "blue": 0.0,
-                "white": 0.0,
+                "white": 1.0,
                 "strobe": 0.0,
-                "dimmer": 0.0
+                "dimmer": 1.0
             }
         },
         {
-            "id": "moving_1",
-            "profile": "moving_head_9ch",
-            "x": 0,
-            "y": 0,
-            "address": 20,
+            "id": "flood2",
+            "profile": "led_fluter_8ch",
+            "x": 952,
+            "y": 60,
+            "address": 23,
             "values": {
-                "dimmer": 0.0,
-                "red": 0.0,
+                "red": 1.0,
                 "green": 0.0,
                 "blue": 0.0,
-                "white": 0.0,
-                "pan": 0.0,
-                "tilt": 0.0,
+                "white": 1.0,
                 "strobe": 0.0,
-                "speed": 0.0
+                "dimmer": 1.0
+            }
+        },
+        {
+            "id": "blinder1",
+            "profile": "blinder",
+            "x": 653,
+            "y": 70,
+            "address": 29,
+            "values": {
+                "dimmer": 1.0,
+                "white": 0.3686274509803922
             }
         }
     ]

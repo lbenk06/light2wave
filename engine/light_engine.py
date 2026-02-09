@@ -1,13 +1,32 @@
 from engine.universe import Universe
 from fixtures.fixture import Fixture
 from fixtures.profiles import ALL_PROFILES
+import os
+import json
 
 
 class LightEngine:
     def __init__(self):
         self.universe = Universe()
         self.fixtures = []
-        self.profiles = ALL_PROFILES
+        self.profiles = ALL_PROFILES.copy()
+
+        self.load_user_profiles()
+
+
+    def load_user_profiles(self):
+        """Lädt eigene Profile aus der JSON-Datei"""
+        filename = "projects/user_profiles.json"
+        
+        if os.path.exists(filename):
+            try:
+                with open(filename, 'r') as f:
+                    custom_profiles = json.load(f)
+                    # Wir fügen die Custom-Profile zu den Standard-Profilen hinzu
+                    self.profiles.update(custom_profiles)
+                    print(f"{len(custom_profiles)} eigene Profile geladen.")
+            except Exception as e:
+                print(f"Fehler beim Laden der User-Profile: {e}")
 
     def add_fixture(self, fixture: Fixture):
         """Fügt ein Fixture zur Engine hinzu"""

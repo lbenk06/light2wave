@@ -1,54 +1,43 @@
 from nicegui import ui
 from gui.state import state
-from projects.projects_io import save_project, load_project
+from projects.projects_io import save_project, load_project, load_fixtures_from_json
 import os
 
-# Statusvariablen für das Platzieren eines neuen Fixtures
-placing_profile = None
-placing_name = None
-placing_address = None
-
 def create():
-    global placing_profile, placing_name, placing_address
-
     ui.label('Traverse').classes('text-h4')
 
-    # =============================
-    # TRAVERSE-BEREICH
-    # =============================
-    with ui.element('div').style(
-        'position: relative; width: 1200px; height: 800px; margin: auto; background: #111;'
-    ) as stage:
+    # Status Variablen
+    placing_state = {
+        "mode": "idle",
+        "profile": None,
+        "address": 1,
+        "name": None
+    }
 
-        # Hintergrundbild (pointer-events none, damit Klicks durchgehen)
-        ui.image('/static/traverse.png').style(
-            'width: 100%; height: 100%; object-fit: contain; pointer-events: none;'
-        )
+    # Globale Referenzen für UI-Updates
+    container_refs = {
+        "layer": None,
+        "elements": {} 
+    }
 
-        fixture_elements = {}
+    # ==========================================
+    # FUNKTIONEN
+    # ==========================================
 
-        # =============================
-        # Fixture löschen
-        # =============================
-        def remove_fixture(fixture):
-            if ui.confirm(f'Soll {fixture.id} gelöscht werden?'):
-                state.engine.fixtures.remove(fixture)
-                redraw_fixtures()
+    def redraw_fixtures():
+        """Löscht den Layer und zeichnet alle Lampen neu."""
+        layer = container_refs["layer"]
+        if layer is None: return
 
-        # =============================
-        # Fixtures zeichnen
-        # =============================
-        def redraw_fixtures():
-            # alte Elemente löschen
-            for el in fixture_elements.values():
-                el.delete()
-            fixture_elements.clear()
+        layer.clear()
+        container_refs["elements"].clear()
 
+        with layer:
             for fixture in state.engine.fixtures:
                 r, g, b = fixture.get_color()
-
-                # Kreis
-                el = ui.element('div').style(f'''
+                
+                # WICHTIG: Hier sind keine Kommentare mehr im Style-String!
+                with ui.element('div').style(f'''
                     position: absolute;
                     left: {fixture.x}px;
                     top: {fixture.y}px;
@@ -56,139 +45,186 @@ def create():
                     height: 24px;
                     border-radius: 50%;
                     background-color: rgb({r},{g},{b});
-                    border: 2px solid black;
+                    border: 2px solid white;
+                    box-shadow: 0 0 5px rgba(0,0,0,0.5);
                     cursor: pointer;
-                ''').on('click', lambda e, f=fixture: remove_fixture(f))
+                    z-index: 10;
+                    transform: translate(-50%, -50%);
+                    pointer-events: auto;
+                ''') as el:
+                    # Klick Event zum Löschen
+                    ui.element('div').classes('w-full h-full').on('click', lambda e, f=fixture: confirm_delete_fixture(f))
+                    
+                    # Tooltip
+                    ui.tooltip(f"{fixture.id} (Addr: {fixture.address})")
+                    
+                    # Text-Label
+                    ui.label(f'{fixture.id}\n{fixture.address}').style('''
+                        position: absolute;
+                        top: 26px;
+                        left: 50%;
+                        transform: translateX(-50%);
+                        font-size: 10px;
+                        color: white;
+                        text-shadow: 1px 1px 1px black;
+                        pointer-events: none;
+                        text-align: center;
+                        white-space: nowrap;
+                    ''')
+                
+                # Referenz speichern für Farb-Updates
+                container_refs["elements"][fixture] = el
 
-                # Name + Adresse unter Kreis
-                ui.label(f'{fixture.id}\nAddr: {fixture.address}').style(f'''
-                    position: absolute;
-                    left: {fixture.x - 20}px;
-                    top: {fixture.y + 28}px;
-                    width: 80px;
-                    text-align: center;
-                    color: white;
-                    font-size: 12px;
-                ''')
+    def confirm_delete_fixture(fixture):
+        """Löschen-Dialog für eine einzelne Lampe"""
+        if placing_state["mode"] == "placing": return
 
-                fixture_elements[fixture] = el
+        with ui.dialog() as dialog, ui.card():
+            ui.label(f"'{fixture.id}' löschen?")
+            with ui.row():
+                def do_delete():
+                    state.engine.fixtures.remove(fixture)
+                    redraw_fixtures()
+                    save_project(state.engine, "projects/my_show.json")
+                    dialog.close()
+                    ui.notify(f"{fixture.id} gelöscht")
+                
+                ui.button('Löschen', on_click=do_delete).props('color=red')
+                ui.button('Abbrechen', on_click=dialog.close).props('flat')
+        dialog.open()
 
-        redraw_fixtures()
+    def handle_stage_click(e):
+        """Klick auf das Bild zum Platzieren"""
+        if placing_state["mode"] != "placing": return
 
-        # =============================
-        # Klick auf Traverse → Fixture platzieren
-        # =============================
-        def on_stage_click(e):
-            global placing_profile, placing_name, placing_address
-            if placing_profile is None:
-                return
+        x = int(e.args.get('offsetX', 0))
+        y = int(e.args.get('offsetY', 0))
 
-            x = int(e.args['offsetX'])
-            y = int(e.args['offsetY'])
-
-            # Name und Adresse setzen
-            if not placing_name:
-                placing_name = f'{placing_profile}_{len(state.engine.fixtures)+1}'
-            if placing_address is None:
-                placing_address = state.engine.next_free_address(
-                    state.engine.get_profile(placing_profile)
-                )
-
+        try:
             # Fixture erstellen
-            fixture = state.engine.create_fixture(
-                profile_id=placing_profile,
+            new_fix = state.engine.create_fixture(
+                profile_id=placing_state["profile"],
                 x=x,
                 y=y,
-                fixture_id=placing_name,
-                address=placing_address
+                fixture_id=placing_state["name"],
+                address=placing_state["address"]
             )
-
-            # Reset der Statusvariablen
-            placing_profile = None
-            placing_name = None
-            placing_address = None
-
+            
+            # Modus beenden
+            placing_state["mode"] = "idle"
+            stage_container.style('cursor: default;')
+            
             redraw_fixtures()
-
-        stage.on('click', on_stage_click)
-
-    # =============================
-    # Steuerung unter der Traverse
-    # =============================
-    ui.separator()
-    with ui.row().classes('justify-center gap-4'):
-
-        # Profil auswählen
-        profile_select = ui.select(
-            options=[(p["name"], pid) for pid, p in state.engine.profiles.items()],
-            label='Profil auswählen'
-        )
-
-        # Startadresse automatisch auf nächste freie Adresse setzen
-        next_address = state.engine.next_free_address(
-            state.engine.get_profile(list(state.engine.profiles.keys())[0])
-        )
-        address_input = ui.number(
-            label='Startadresse',
-            value=next_address,
-            min=1,
-            max=512,
-            step=1
-        )
-
-        # Name eingeben
-        name_input = ui.input(label='Gerätename', value='')
-
-        # Gerät platzieren starten
-        def start_placing():
-            global placing_profile, placing_name, placing_address
-            placing_profile = profile_select.value
-            placing_name = name_input.value.strip() or None
-            placing_address = int(address_input.value)
-
-        ui.button('Gerät hinzufügen', on_click=start_placing)
-
-        # =============================
-        # Projekt speichern
-        # =============================
-        def save_current_project():
-            if not os.path.exists('projects'):
-                os.makedirs('projects')
-
             save_project(state.engine, "projects/my_show.json")
-            ui.notify("Projekt gespeichert", color="green")
+            ui.notify(f"Platziert: {new_fix.id}", color="green")
+            
+        except Exception as err:
+            ui.notify(f"Fehler: {str(err)}", color="red")
 
-        ui.button('Projekt speichern', on_click=save_current_project)
+    # ==========================================
+    # UI AUFBAU
+    # ==========================================
 
-        # Projekt laden
-        def load_current_project():
-            try:
-                project_data = load_project("projects/my_show.json")
-                state.engine.fixtures.clear()
-                from projects.projects_io import load_fixtures_from_json
-                load_fixtures_from_json(project_data.get("fixtures", []), state.engine)
+    with ui.element('div').style('position: relative; width: 100%; height: 800px; overflow: hidden; border: 1px solid #333;') as stage_container:
+        
+        # Hintergrundbild (fängt Klicks ab)
+        ui.image('/static/traverse.png').style('width: 100%; height: 100%; object-fit: contain;').on('click', handle_stage_click)
+        
+        # Fixture Layer (darüberliegend)
+        # pointer-events: none, damit Klicks aufs Bild durchgehen (außer auf Lampen)
+        container_refs["layer"] = ui.element('div').style('position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;')
+
+    # Initiale Zeichnung
+    redraw_fixtures()
+
+    ui.separator().classes('my-4')
+
+    # Steuerung
+    with ui.row().classes('w-full items-end gap-4'):
+        
+        # Profil Auswahl mit Refresh-Logik
+        with ui.row().classes('gap-1 items-end'):
+            # Wir definieren das Select leer oder mit aktuellen Werten
+            opts = {pid: p['name'] for pid, p in state.engine.profiles.items()}
+            sel_prof = ui.select(opts, label="Profil").classes('w-40')
+            if opts: sel_prof.value = list(opts.keys())[0]
+            
+            # Funktion zum Aktualisieren der Liste
+            def refresh_profile_list():
+                # Neue Liste aus der Engine holen
+                new_opts = {pid: p['name'] for pid, p in state.engine.profiles.items()}
+                sel_prof.options = new_opts
+                sel_prof.update() # UI neu zeichnen
+                ui.notify("Profil-Liste aktualisiert")
+
+            # Kleiner Refresh Button daneben
+            ui.button(on_click=refresh_profile_list, icon='refresh').props('flat dense round color=grey')
+
+        # Adresse
+        inp_addr = ui.number(label="Adresse", value=1, min=1, max=512, format="%.0f").classes('w-24')
+        
+        def update_addr_suggestion():
+            if sel_prof.value:
+                prof = state.engine.get_profile(sel_prof.value)
+                inp_addr.value = state.engine.next_free_address(prof)
+        sel_prof.on_value_change(update_addr_suggestion)
+
+        # Name
+        inp_name = ui.input(label="Name").classes('w-40')
+
+        # Button Platzieren
+        def start_placing():
+            if not sel_prof.value: return
+            placing_state.update({
+                "mode": "placing",
+                "profile": sel_prof.value,
+                "address": int(inp_addr.value),
+                "name": inp_name.value or None
+            })
+            stage_container.style('cursor: crosshair;')
+            ui.notify("Klicke auf die Traverse!", color="blue")
+
+        ui.button('Platzieren', on_click=start_placing, icon='add_location').props('color=primary')
+
+        ui.separator().props('vertical')
+
+        # Projekt IO
+        def do_save():
+            if not os.path.exists('projects'): os.makedirs('projects')
+            save_project(state.engine, "projects/my_show.json")
+            ui.notify("Gespeichert", color="green")
+
+        def do_load():
+            data = load_project("projects/my_show.json")
+            if data:
+                load_fixtures_from_json(data.get("fixtures", []), state.engine)
                 redraw_fixtures()
-                ui.notify("Projekt geladen", color="green")
-            except FileNotFoundError:
-                ui.notify("Keine gespeicherte Show gefunden", color="red")
+                ui.notify("Geladen", color="green")
 
-        ui.button('Projekt laden', on_click=load_current_project)
+        def do_clear():
+            # Dialog für alles löschen
+            with ui.dialog() as d, ui.card():
+                ui.label("Alles löschen?")
+                with ui.row():
+                    def confirm():
+                        state.engine.fixtures.clear()
+                        redraw_fixtures()
+                        save_project(state.engine, "projects/my_show.json")
+                        d.close()
+                        ui.notify("Projekt geleert", color="orange")
+                    ui.button("JA", on_click=confirm).props('color=red')
+                    ui.button("Nein", on_click=d.close).props('flat')
+            d.open()
 
-        # Projekt löschen
-        def delete_project():
-            if ui.confirm("Gesamtes Projekt löschen?"):
-                state.engine.fixtures.clear()
-                redraw_fixtures()
-                ui.notify("Projekt gelöscht", color="red")
+        with ui.row():
+            ui.button('Save', on_click=do_save, icon='save').props('flat')
+            ui.button('Load', on_click=do_load, icon='folder_open').props('flat')
+            ui.button('Clear', on_click=do_clear, icon='delete').props('color=red flat')
 
-        ui.button('Projekt löschen', on_click=delete_project)
-
-    # =============================
-    # Live-Farbupdate
-    # =============================
+    # Live-Farben Update (Effizient)
     def update_colors():
-        for fixture, el in fixture_elements.items():
+        for fixture, el in container_refs["elements"].items():
             r, g, b = fixture.get_color()
             el.style(f'background-color: rgb({r},{g},{b});')
 
-    ui.timer(1 / 20, update_colors)
+    ui.timer(0.1, update_colors)
