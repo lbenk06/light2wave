@@ -1,6 +1,7 @@
 from nicegui import ui
 from gui.state import state
 from projects.projects_io import save_project, load_project, load_fixtures_from_json
+from engine.traverse1 import Traverse 
 import os
 
 def create():
@@ -20,21 +21,50 @@ def create():
         "elements": {} 
     }
 
-    # ==========================================
-    # FUNKTIONEN
-    # ==========================================
+    # Snap-on für Geräte
+    ghost_fixture = {
+        "el": None,
+        "x": 0,
+        "y": 0,
+    }
+
+    placing_state.update({
+        "hover_snap": None
+    })
+
+    snap_points_ui = []
+    snap_layer = None
+
+    if not state.engine.traverses:
+        state.engine.traverses.append(
+            Traverse(
+                x1=200, y1=200,
+                x2=1000, y2=200,
+                snap_distance=60,
+                name="Front-Traverse"
+            )
+        )
+
+
+# Funktionen
+################################################################################################
 
     def redraw_fixtures():
         """Löscht den Layer und zeichnet alle Lampen neu."""
         layer = container_refs["layer"]
-        if layer is None: return
+        if layer is None: 
+            return
 
-        layer.clear()
+        layer.clear()  # Layer beibehalten, nur Kinder löschen
         container_refs["elements"].clear()
 
         with layer:
             for fixture in state.engine.fixtures:
                 r, g, b = fixture.get_color()
+
+                # Direktes Fixture-Div, kein extra div für Klick
+                def make_click_handler(f):
+                    return lambda e: confirm_delete_fixture(f)
                 
                 # WICHTIG: Hier sind keine Kommentare mehr im Style-String!
                 with ui.element('div').style(f'''
@@ -48,13 +78,11 @@ def create():
                     border: 2px solid white;
                     box-shadow: 0 0 5px rgba(0,0,0,0.5);
                     cursor: pointer;
-                    z-index: 10;
+                    z-index: 1100;
                     transform: translate(-50%, -50%);
                     pointer-events: auto;
-                ''') as el:
-                    # Klick Event zum Löschen
-                    ui.element('div').classes('w-full h-full').on('click', lambda e, f=fixture: confirm_delete_fixture(f))
-                    
+                ''').on('click', make_click_handler(fixture)) as el:
+
                     # Tooltip
                     ui.tooltip(f"{fixture.id} (Addr: {fixture.address})")
                     
@@ -77,7 +105,8 @@ def create():
 
     def confirm_delete_fixture(fixture):
         """Löschen-Dialog für eine einzelne Lampe"""
-        if placing_state["mode"] == "placing": return
+        if placing_state["mode"] == "placing":
+            return
 
         with ui.dialog() as dialog, ui.card():
             ui.label(f"'{fixture.id}' löschen?")
@@ -88,51 +117,249 @@ def create():
                     save_project(state.engine, "projects/my_show.json")
                     dialog.close()
                     ui.notify(f"{fixture.id} gelöscht")
-                
+
                 ui.button('Löschen', on_click=do_delete).props('color=red')
                 ui.button('Abbrechen', on_click=dialog.close).props('flat')
         dialog.open()
 
     def handle_stage_click(e):
-        """Klick auf das Bild zum Platzieren"""
-        if placing_state["mode"] != "placing": return
+        if placing_state["mode"] != "placing":
+            return
 
-        x = int(e.args.get('offsetX', 0))
-        y = int(e.args.get('offsetY', 0))
+        snap = placing_state["hover_snap"]
+        if not snap:
+            ui.notify("Kein Snap-Point getroffen", color="orange")
+            return
+
+        traverse, sp_id = snap
+        sp = traverse.snap_points[sp_id]
 
         try:
-            # Fixture erstellen
             new_fix = state.engine.create_fixture(
                 profile_id=placing_state["profile"],
-                x=x,
-                y=y,
+                x=sp["x"],
+                y=sp["y"],
                 fixture_id=placing_state["name"],
                 address=placing_state["address"]
             )
-            
-            # Modus beenden
+
+            new_fix.traverse = traverse
+            new_fix.snap_point = sp_id
+
+            sp["occupied"] = True
+            sp["fixture"] = new_fix
+
+            # Cleanup
+            ghost_fixture["el"].delete()
+            ghost_fixture["el"] = None
+
             placing_state["mode"] = "idle"
             stage_container.style('cursor: default;')
-            
+
             redraw_fixtures()
             save_project(state.engine, "projects/my_show.json")
-            ui.notify(f"Platziert: {new_fix.id}", color="green")
-            
+            ui.notify(f"{new_fix.id} platziert", color="green")
+
         except Exception as err:
-            ui.notify(f"Fehler: {str(err)}", color="red")
+            ui.notify(str(err), color="red")
 
-    # ==========================================
-    # UI AUFBAU
-    # ==========================================
+        draw_snap_points(show=False)
 
-    with ui.element('div').style('position: relative; width: 100%; height: 800px; overflow: hidden; border: 1px solid #333;') as stage_container:
+
+    def start_placing():
+        if not sel_prof.value:
+            return
+
+        placing_state.update({
+            "mode": "placing",
+            "profile": sel_prof.value,
+            "address": int(inp_addr.value),
+            "name": inp_name.value or None,
+            "hover_snap": None
+        })
+
+        # Ghost erzeugen
+        with stage_container:
+            ghost_fixture["el"] = ui.element('div').style('''
+                position: absolute;
+                width: 24px;
+                height: 24px;
+                border-radius: 50%;
+                background: rgba(255,255,255,0.4);
+                border: 2px dashed cyan;
+                transform: translate(-50%, -50%);
+                pointer-events: none;
+                z-index: 50;
+            ''')
+
+        stage_container.style('cursor: crosshair;')
+        ui.notify("Fixture am Mauszeiger – auf Snap klicken")
+
+        draw_snap_points(show=True)
+
+
+    def handle_mouse_move(e):
+        if placing_state["mode"] != "placing":
+            return
+        if not ghost_fixture["el"]:
+            return
+
+        # STAGE-lokale Koordinaten (NiceGUI korrekt)
+        x = int(e.args.get("offsetX", 0))
+        y = int(e.args.get("offsetY", 0))
+
+
+        # Snap suchen
+        snap = find_nearest_snap(x, y)
+        placing_state["hover_snap"] = snap
+
+        # Snap-UI reset
+        for el in snap_points_ui:
+            el.style('transform: translate(-50%, -50%) scale(1); background: cyan;')
+
+        if snap:
+            t, sp_id = snap
+            sp = t.snap_points[sp_id]
+
+            #print("mouse:", x, y, "snap:", sp["x"], sp["y"])
+
+            update_ghost(sp["x"], sp["y"], snapped=True)
+
+            # Sicherer Zugriff auf das UI-Element
+            snap_points_ui[sp_id].style(
+                'transform: translate(-50%, -50%) scale(1.8); background: lime;'
+            )
+
+            #snap_points_ui[sp_id].style(
+            #    'transform: translate(-50%, -50%) scale(1.8); background: lime;'
+            #)
+
+            #draw_snap_points(show=False)
+        else:
+            #print("mouse:", x, y, "snap: none")
+            update_ghost(x, y, snapped=False)
+
+
+
+
+    def update_ghost(x: int, y: int, snapped: bool = False):
+        if not ghost_fixture["el"]:
+            return
+
+        color = "lime" if snapped else "cyan"
+
+        ghost_fixture["el"].style(
+            f'''
+            left: {x}px;
+            top: {y}px;
+            border-color: {color};
+            '''
+        )
+
+    SNAP_RADIUS = 18
+    def find_nearest_snap(x, y):
+        best = None
+        best_dist = SNAP_RADIUS
+
+        for t in state.engine.traverses:
+            for i, sp in enumerate(t.snap_points):
+                if sp["occupied"]:
+                    continue
+                d = ((sp["x"]-x)**2 + (sp["y"]-y)**2) ** 0.5
+                if d < best_dist:
+                    best = (t, i)
+                    best_dist = d
+
+        return best
+    
+    def draw_snap_points(show=False):
+        snap_layer.clear()
+        snap_points_ui.clear()
+
+        if not show:
+            return
+
+        with mouse_layer:
+            for t in state.engine.traverses:
+                for sp in t.snap_points:
+                    el = ui.element('div').style(f'''
+                        position: absolute;
+                        left: {sp["x"]}px;
+                        top: {sp["y"]}px;
+                        width: 8px;
+                        height: 8px;
+                        border-radius: 50%;
+                        background: {'red' if sp["occupied"] else 'cyan'};
+                        transform: translate(-50%, -50%);
+                        pointer-events: none;
+                    ''')
+                    snap_points_ui.append(el)
+
+        
+
+    # Projekt IO
+    def do_save():
+        if not os.path.exists('projects'): os.makedirs('projects')
+        save_project(state.engine, "projects/my_show.json")
+        ui.notify("Gespeichert", color="green")
+
+    def do_load():
+        data = load_project("projects/my_show.json")
+        if data:
+            load_fixtures_from_json(data.get("fixtures", []), state.engine)
+            redraw_fixtures()
+            ui.notify("Geladen", color="green")
+
+    def do_clear():
+        # Dialog für alles löschen
+        with ui.dialog() as d, ui.card():
+            ui.label("Alles löschen?")
+            with ui.row():
+                def confirm():
+                    state.engine.fixtures.clear()
+                    redraw_fixtures()
+                    save_project(state.engine, "projects/my_show.json")
+                    d.close()
+                    ui.notify("Projekt geleert", color="orange")
+                ui.button("JA", on_click=confirm).props('color=red')
+                ui.button("Nein", on_click=d.close).props('flat')
+        d.open()
+
+
+# UI AUFBAU
+################################################################################################
+
+    with ui.element('div').style(
+        'position: relative; width: 1200px; height: 800px; overflow: hidden;  background: #111;' # border: 1px solid #333;
+    ) as stage_container:
+        
+        #stage_container.on('mousemove', handle_mouse_move)
+        #stage_container.on('click', handle_stage_click)
         
         # Hintergrundbild (fängt Klicks ab)
-        ui.image('/static/traverse.png').style('width: 100%; height: 100%; object-fit: contain;').on('click', handle_stage_click)
+        ui.image('/static/traverse.png') \
+            .style('position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none;') # object-fit: contain;
+            ###.on('mousemove', handle_mouse_move) \
+            ###.on('click', handle_stage_click)
         
+        # Snap Overlay (unsichtbar, aber fängt Mausbewegung ab)
+        snap_layer = ui.element('div').style(
+            'position:absolute; inset:0; z-index:10; pointer-events: none;'
+        )
+
         # Fixture Layer (darüberliegend)
         # pointer-events: none, damit Klicks aufs Bild durchgehen (außer auf Lampen)
-        container_refs["layer"] = ui.element('div').style('position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;')
+        container_refs["layer"] = ui.element('div').style(
+            'position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: auto;'
+        )
+
+        mouse_layer = ui.element('div').style(
+            'position: absolute; inset: 0; z-index: 1000; cursor: crosshair; background: transparent;' #pointer-events: none;
+        )
+
+        mouse_layer.on('mousemove', handle_mouse_move)
+        mouse_layer.on('click', handle_stage_click)
+
 
     # Initiale Zeichnung
     redraw_fixtures()
@@ -173,48 +400,11 @@ def create():
         inp_name = ui.input(label="Name").classes('w-40')
 
         # Button Platzieren
-        def start_placing():
-            if not sel_prof.value: return
-            placing_state.update({
-                "mode": "placing",
-                "profile": sel_prof.value,
-                "address": int(inp_addr.value),
-                "name": inp_name.value or None
-            })
-            stage_container.style('cursor: crosshair;')
-            ui.notify("Klicke auf die Traverse!", color="blue")
-
         ui.button('Platzieren', on_click=start_placing, icon='add_location').props('color=primary')
 
         ui.separator().props('vertical')
 
-        # Projekt IO
-        def do_save():
-            if not os.path.exists('projects'): os.makedirs('projects')
-            save_project(state.engine, "projects/my_show.json")
-            ui.notify("Gespeichert", color="green")
 
-        def do_load():
-            data = load_project("projects/my_show.json")
-            if data:
-                load_fixtures_from_json(data.get("fixtures", []), state.engine)
-                redraw_fixtures()
-                ui.notify("Geladen", color="green")
-
-        def do_clear():
-            # Dialog für alles löschen
-            with ui.dialog() as d, ui.card():
-                ui.label("Alles löschen?")
-                with ui.row():
-                    def confirm():
-                        state.engine.fixtures.clear()
-                        redraw_fixtures()
-                        save_project(state.engine, "projects/my_show.json")
-                        d.close()
-                        ui.notify("Projekt geleert", color="orange")
-                    ui.button("JA", on_click=confirm).props('color=red')
-                    ui.button("Nein", on_click=d.close).props('flat')
-            d.open()
 
         with ui.row():
             ui.button('Save', on_click=do_save, icon='save').props('flat')

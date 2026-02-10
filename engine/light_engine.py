@@ -9,6 +9,7 @@ class LightEngine:
     def __init__(self):
         self.universe = Universe()
         self.fixtures = []
+        self.traverses = []
         self.profiles = ALL_PROFILES.copy()
 
         self.load_user_profiles()
