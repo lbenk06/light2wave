@@ -2,6 +2,7 @@ from nicegui import ui
 from gui.state import state
 from projects.projects_io import save_project, load_project, load_fixtures_from_json
 from engine.traverse1 import Traverse 
+from nicegui import run
 import os
 
 def create():
@@ -64,7 +65,8 @@ def create():
 
                 # Direktes Fixture-Div, kein extra div für Klick
                 def make_click_handler(f):
-                    return lambda e: confirm_delete_fixture(f)
+                    #return lambda e: confirm_delete_fixture(f)
+                    return lambda e: confirm_delete_fixture(f, e.client)
                 
                 # WICHTIG: Hier sind keine Kommentare mehr im Style-String!
                 with ui.element('div').style(f'''
@@ -103,24 +105,27 @@ def create():
                 # Referenz speichern für Farb-Updates
                 container_refs["elements"][fixture] = el
 
-    def confirm_delete_fixture(fixture):
-        """Löschen-Dialog für eine einzelne Lampe"""
-        if placing_state["mode"] == "placing":
-            return
-
+    def confirm_delete_fixture(fixture, client):
         with ui.dialog() as dialog, ui.card():
             ui.label(f"'{fixture.id}' löschen?")
             with ui.row():
                 def do_delete():
+                    for t in state.engine.traverses:
+                        for sp in t.snap_points:
+                            if sp.get("fixture") == fixture:
+                                sp["occupied"] = False
+                                sp["fixture"] = None
+                    
                     state.engine.fixtures.remove(fixture)
                     redraw_fixtures()
                     save_project(state.engine, "projects/my_show.json")
                     dialog.close()
-                    ui.notify(f"{fixture.id} gelöscht")
 
                 ui.button('Löschen', on_click=do_delete).props('color=red')
                 ui.button('Abbrechen', on_click=dialog.close).props('flat')
+
         dialog.open()
+
 
     def handle_stage_click(e):
         if placing_state["mode"] != "placing":
@@ -193,7 +198,7 @@ def create():
             ''')
 
         stage_container.style('cursor: crosshair;')
-        ui.notify("Fixture am Mauszeiger – auf Snap klicken")
+        ui.notify("Fixture am Mauszeiger - auf Snap klicken")
 
         draw_snap_points(show=True)
 
@@ -221,8 +226,6 @@ def create():
             t, sp_id = snap
             sp = t.snap_points[sp_id]
 
-            #print("mouse:", x, y, "snap:", sp["x"], sp["y"])
-
             update_ghost(sp["x"], sp["y"], snapped=True)
 
             # Sicherer Zugriff auf das UI-Element
@@ -230,13 +233,7 @@ def create():
                 'transform: translate(-50%, -50%) scale(1.8); background: lime;'
             )
 
-            #snap_points_ui[sp_id].style(
-            #    'transform: translate(-50%, -50%) scale(1.8); background: lime;'
-            #)
-
-            #draw_snap_points(show=False)
         else:
-            #print("mouse:", x, y, "snap: none")
             update_ghost(x, y, snapped=False)
 
 
@@ -315,12 +312,12 @@ def create():
         with ui.dialog() as d, ui.card():
             ui.label("Alles löschen?")
             with ui.row():
-                def confirm():
+                def confirm(): #def confirm():
                     state.engine.fixtures.clear()
                     redraw_fixtures()
                     save_project(state.engine, "projects/my_show.json")
                     d.close()
-                    ui.notify("Projekt geleert", color="orange")
+
                 ui.button("JA", on_click=confirm).props('color=red')
                 ui.button("Nein", on_click=d.close).props('flat')
         d.open()
@@ -333,14 +330,9 @@ def create():
         'position: relative; width: 1200px; height: 800px; overflow: hidden;  background: #111;' # border: 1px solid #333;
     ) as stage_container:
         
-        #stage_container.on('mousemove', handle_mouse_move)
-        #stage_container.on('click', handle_stage_click)
-        
         # Hintergrundbild (fängt Klicks ab)
         ui.image('/static/traverse.png') \
             .style('position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none;') # object-fit: contain;
-            ###.on('mousemove', handle_mouse_move) \
-            ###.on('click', handle_stage_click)
         
         # Snap Overlay (unsichtbar, aber fängt Mausbewegung ab)
         snap_layer = ui.element('div').style(
