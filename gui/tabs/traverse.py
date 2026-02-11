@@ -303,9 +303,16 @@ def create():
     def do_load():
         data = load_project("projects/my_show.json")
         if data:
-            load_fixtures_from_json(data.get("fixtures", []), state.engine)
+            fixtures_list=data.get("fixtures", [])
+            load_fixtures_from_json(fixtures_list, state.engine)
+            
+            #banken und szenen laden:
+            state.engine.banks=data.get("banks", [])            
+            
             redraw_fixtures()
             ui.notify("Geladen", color="green")
+        else:
+            ui.notify("Fehler beim Laden (Projektdatei nicht gefunden)", color="red")
 
     def do_clear():
         # Dialog für alles löschen

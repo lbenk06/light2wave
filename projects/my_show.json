@@ -7,8 +7,8 @@
             "y": 200,
             "address": 1,
             "values": {
-                "dimmer": 0.0,
-                "red": 0.0,
+                "dimmer": 0.9921568627450981,
+                "red": 0.996078431372549,
                 "green": 0.0,
                 "blue": 0.0,
                 "strobe": 0.0
@@ -21,8 +21,8 @@
             "y": 200,
             "address": 1,
             "values": {
-                "dimmer": 0.0,
-                "red": 0.0,
+                "dimmer": 0.9921568627450981,
+                "red": 0.9921568627450981,
                 "green": 0.0,
                 "blue": 0.0,
                 "strobe": 0.0
@@ -35,12 +35,99 @@
             "y": 200,
             "address": 1,
             "values": {
-                "dimmer": 0.0,
-                "red": 0.0,
+                "dimmer": 0.9921568627450981,
+                "red": 0.984313725490196,
                 "green": 0.0,
                 "blue": 0.0,
                 "strobe": 0.0
             }
+        },
+        {
+            "id": "par4",
+            "profile": "led_par_6ch",
+            "x": 630,
+            "y": 200,
+            "address": 8,
+            "values": {
+                "dimmer": 0.9882352941176471,
+                "red": 0.9921568627450981,
+                "green": 0.0,
+                "blue": 0.0,
+                "strobe": 0.0
+            }
+        }
+    ],
+    "banks": [
+        {
+            "name": "disco",
+            "scenes": [
+                {
+                    "name": "alle dunkel",
+                    "data": {
+                        "led_par_6ch_1": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "led_par_6ch_4": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "led_par_6ch_3": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "par4": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        }
+                    }
+                },
+                {
+                    "name": "alle rot",
+                    "data": {
+                        "led_par_6ch_1": {
+                            "dimmer": 0.9921568627450981,
+                            "red": 0.996078431372549,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "led_par_6ch_4": {
+                            "dimmer": 0.9921568627450981,
+                            "red": 0.9921568627450981,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "led_par_6ch_3": {
+                            "dimmer": 0.9921568627450981,
+                            "red": 0.984313725490196,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "par4": {
+                            "dimmer": 0.9882352941176471,
+                            "red": 0.9921568627450981,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        }
+                    }
+                }
+            ]
         }
     ]
 }

@@ -51,3 +51,13 @@ class Fixture:
             b=min(255, b+w)
         
         return (r,g,b)
+    
+
+    def set_color(self, r, g, b):
+        #umrechnung von 0-255 auf 0.0-1.0
+        self.set("red",r/255.0)
+        self.set("green",g/255.0)
+        self.set("blue",b/255.0)
+
+        if self.has("dimmer"):
+            self.set("dimmer", 1.0)

@@ -8,7 +8,8 @@ def save_project(engine, filename):
     Wichtig: Wir speichern nur die ID des Profils, nicht das ganze Dictionary.
     """
     project_dict = {
-        "fixtures": []
+        "fixtures": [],
+        "banks":getattr(engine, "banks", [])  # Falls es noch keine gibt leer
     }
 
     for f in engine.fixtures:
