@@ -1,13 +1,15 @@
 class Fixture:
 
     #fixture id: name vom gerät, profile: welche kanäle und was macht jeder (dictionary mit den kanal definitionen), adress: startadresse
-    def __init__(self, fixture_id, profile, address, x=0, y=0):  
+    def __init__(self, fixture_id, profile, address, x=0, y=0, traverse=None, snap_point=None):  
         self.id=fixture_id
         self.profile=profile
         self.profile_id=profile.get("profile_id","unknown")
         self.address=address
         self.x=x
         self.y=y
+        self.traverse=traverse
+        self.snap_point=snap_point
 
 
         self.values={}

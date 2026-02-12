@@ -8,6 +8,10 @@ def save_project(engine, filename):
     Wichtig: Wir speichern nur die ID des Profils, nicht das ganze Dictionary.
     """
     project_dict = {
+        "traverses": [
+            {"name": t.name, "x1": t.x1, "y1": t.y1, "x2": t.x2, "y2": t.y2, "snap_distance": t.snap_distance}
+            for t in engine.traverses
+        ],
         "fixtures": [],
         "banks":getattr(engine, "banks", [])  # Falls es noch keine gibt leer
     }
@@ -17,13 +21,24 @@ def save_project(engine, filename):
         # oder holen sie aus dem Profile-Dict
         pid = getattr(f, "profile_id", f.profile.get("profile_id"))
 
+        #traverse_name = getattr(f, "traverse", None)
+        #if traverse_name is not None:
+        #    traverse_name = f.traverse.name
+        traverse_name = f.traverse.name if f.traverse else None
+        snap_point_index = f.snap_point if f.snap_point is not None else None
+        #traverse_name = getattr(f, "name", None)
+        #snap_point_index = getattr(f, "snap_point", None)
+
         project_dict["fixtures"].append({
             "id": f.id,
             "profile": pid,  # Hier speichern wir z.B. "led_par_6ch"
             "x": f.x,
             "y": f.y,
             "address": f.address,
-            "values": f.values
+            "values": f.values,
+            "traverse": traverse_name,
+            "snap_point_index": snap_point_index
+            
         })
 
     try:
@@ -61,15 +76,9 @@ def load_fixtures_from_json(fixture_list_data, engine):
     count = 0
     for f_data in fixture_list_data:
         profile_id = f_data["profile"]
-        
-        # --- HIER WAR DER FEHLER ---
-        # Wir suchen jetzt in engine.profiles (da sind Standard UND User Profile drin)
-        if profile_id in engine.profiles:
-            profile_dict = engine.profiles[profile_id]
-        else:
-            # Fallback: Vielleicht ist es doch ein Standard-Profil, das noch nicht geladen wurde?
-            # Aber eigentlich sollte engine.profiles alles haben.
-            print(f"ACHTUNG: Profil '{profile_id}' nicht in der Engine gefunden! Gerät {f_data['id']} wird übersprungen.")
+        profile_dict = engine.profiles.get(profile_id)
+        if not profile_dict:
+            print(f"Profil '{profile_id}' nicht gefunden! Gerät {f_data['id']} wird übersprungen.")
             continue
 
         # Fixture erstellen
@@ -79,10 +88,23 @@ def load_fixtures_from_json(fixture_list_data, engine):
             address=f_data["address"],
             x=int(f_data.get("x", 0)),
             y=int(f_data.get("y", 0))
-        )
+        )        
 
         if "values" in f_data:
             fixture.values = f_data["values"]
+
+        # Traverses korrekt zuweisen
+        traverse_name = f_data.get("traverse")
+        snap_index = f_data.get("snap_point_index")
+
+        if traverse_name is not None and snap_index is not None:
+            t = next((tr for tr in engine.traverses if tr.name == traverse_name), None)
+            if t and snap_index < len(t.snap_points):
+                fixture.traverse = t
+                fixture.snap_point = snap_index
+                t.snap_points[snap_index]["occupied"] = True
+                t.snap_points[snap_index]["fixture"] = fixture
+
 
         engine.add_fixture(fixture)
         count += 1

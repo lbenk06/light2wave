@@ -3,18 +3,32 @@ from gui.state import state
 from projects.projects_io import save_project, load_project, load_fixtures_from_json
 from engine.traverse1 import Traverse 
 from nicegui import run
+import numpy as np
 import os
 
 def create():
     ui.label('Traverse').classes('text-h4')
 
+    interaction_state = {"mode": "idle"}  # idle | placing | dragging
+
     # Status Variablen
     placing_state = {
-        "mode": "idle",
+        #"mode": "idle",
         "profile": None,
         "address": 1,
-        "name": None
+        "name": None,
+        "hover_snap": None
     }
+
+    drag_state = {
+        "fixture": None,
+        "origin_traverse": None,
+        "origin_snap": None,
+    }
+
+    placing_state.update({
+        "hover_snap": None
+    })    
 
     # Globale Referenzen für UI-Updates
     container_refs = {
@@ -29,23 +43,33 @@ def create():
         "y": 0,
     }
 
-    placing_state.update({
-        "hover_snap": None
-    })
-
-    snap_points_ui = []
+    snap_points_ui = {}
     snap_layer = None
+    SNAP_RADIUS = 18
 
     if not state.engine.traverses:
-        state.engine.traverses.append(
+        #state.engine.traverses.append(
+        state.engine.traverses.extend([
             Traverse(
                 x1=200, y1=200,
                 x2=1000, y2=200,
-                snap_distance=60,
+                snap_distance=50,
                 name="Front-Traverse"
+            ),
+            Traverse(
+                x1=175, y1=175,
+                x2=175, y2=575,
+                snap_distance=50,
+                name="Front-Left-Traverse"
+            ),
+            Traverse(
+                x1=1025, y1=175,
+                x2=1025, y2=575,
+                snap_distance=50,
+                name="Front-Right-Traverse"
             )
-        )
-
+        ])
+    
 
 # Funktionen
 ################################################################################################
@@ -63,12 +87,6 @@ def create():
             for fixture in state.engine.fixtures:
                 r, g, b = fixture.get_color()
 
-                # Direktes Fixture-Div, kein extra div für Klick
-                def make_click_handler(f):
-                    #return lambda e: confirm_delete_fixture(f)
-                    return lambda e: confirm_delete_fixture(f, e.client)
-                
-                # WICHTIG: Hier sind keine Kommentare mehr im Style-String!
                 with ui.element('div').style(f'''
                     position: absolute;
                     left: {fixture.x}px;
@@ -82,8 +100,8 @@ def create():
                     cursor: pointer;
                     z-index: 1100;
                     transform: translate(-50%, -50%);
-                    pointer-events: auto;
-                ''').on('click', make_click_handler(fixture)) as el:
+                    pointer-events: auto;  
+                ''').on('mousedown', lambda e, f=fixture: handle_mouse_down(f)) as el:
 
                     # Tooltip
                     ui.tooltip(f"{fixture.id} (Addr: {fixture.address})")
@@ -95,17 +113,17 @@ def create():
                         left: 50%;
                         transform: translateX(-50%);
                         font-size: 10px;
-                        color: white;
-                        text-shadow: 1px 1px 1px black;
+                        color: black;
                         pointer-events: none;
                         text-align: center;
                         white-space: nowrap;
                     ''')
+                    #text-shadow: 1px 1px 1px black;
                 
                 # Referenz speichern für Farb-Updates
                 container_refs["elements"][fixture] = el
 
-    def confirm_delete_fixture(fixture, client):
+    def delete_fixture(fixture, client):
         with ui.dialog() as dialog, ui.card():
             ui.label(f"'{fixture.id}' löschen?")
             with ui.row():
@@ -126,9 +144,103 @@ def create():
 
         dialog.open()
 
+    def trash_bin(x, y):
+        stage_width = 1200
+        stage_height = 800
+        size = 50
+        margin = 20
+
+        return (
+            stage_width - margin -size <= x <= stage_width - margin and
+            stage_height - margin -size <= y <= stage_height - margin
+        )
+
+    def handle_mouse_down(fixture):
+
+        if interaction_state["mode"] == "placing":
+            return
+
+        if fixture.traverse is None or fixture.snap_point is None:
+            ui.notify("Dieses Fixture ist noch keinem Traverse zugeordnet!", color="orange")
+            return
+        
+        interaction_state["mode"] = "dragging"
+        drag_state["fixture"] = fixture
+        drag_state["origin_traverse"] = fixture.traverse
+        drag_state["origin_snap"] = fixture.snap_point
+
+        # alten Snap erstmal freigeben
+        sp = fixture.traverse.snap_points[fixture.snap_point]
+        sp["occupied"] = False
+        sp["fixture"] = None
+
+        # Fixtures halbtransparent machen
+        el = container_refs["elements"].get(fixture)
+        if el:
+            el.style('opacity: 0.5;')
+
+        draw_snap_points(show=True)
+        create_ghost()
+
+    def handle_mouse_up(e):
+
+        if interaction_state["mode"] != "dragging":
+            return
+
+        fixture = drag_state["fixture"]
+        x = int(e.args.get("offsetX", 0))
+        y = int(e.args.get("offsetY", 0))
+
+        if trash_bin(x, y):
+            delete_fixture(fixture, e.client)
+            interaction_state["mode"] = "idle"
+            drag_state["fixture"] = None
+            draw_snap_points(show=False)
+            redraw_fixtures()
+            return
+
+        snap = placing_state["hover_snap"]
+
+        if not snap:
+            ui.notify("Kein Snap-Punkt", color="orange")
+            return
+
+        new_traverse, new_sp_id = snap
+        new_sp = new_traverse.snap_points[new_sp_id]
+
+        # Alten Snap freigeben
+        old_traverse = fixture.traverse
+        old_sp = old_traverse.snap_points[fixture.snap_point]
+        old_sp["occupied"] = False
+        old_sp["fixture"] = None
+
+        # Neuen Snap belegen
+        fixture.x = new_sp["x"]
+        fixture.y = new_sp["y"]
+        fixture.traverse = new_traverse
+        fixture.snap_point = new_sp_id
+
+        new_sp["occupied"] = True
+        new_sp["fixture"] = fixture
+
+        interaction_state["mode"] = "idle"
+        drag_state["fixture"] = None
+
+        # Fixtures wieder ganz sichtbar
+        el = container_refs["elements"].get(fixture)
+        if el:
+            el.style('opacity: 1;')
+
+        if ghost_fixture["el"]:
+            ghost_fixture["el"].delete()
+            ghost_fixture["el"] = None
+
+        draw_snap_points(show=False)
+        redraw_fixtures()
+        save_project(state.engine, "projects/my_show.json")
 
     def handle_stage_click(e):
-        if placing_state["mode"] != "placing":
+        if interaction_state["mode"] != "placing":
             return
 
         snap = placing_state["hover_snap"]
@@ -158,32 +270,104 @@ def create():
             ghost_fixture["el"].delete()
             ghost_fixture["el"] = None
 
-            placing_state["mode"] = "idle"
+            interaction_state["mode"] = "idle"
             stage_container.style('cursor: default;')
 
             redraw_fixtures()
             save_project(state.engine, "projects/my_show.json")
             ui.notify(f"{new_fix.id} platziert", color="green")
+            draw_snap_points(show=False)
 
         except Exception as err:
             ui.notify(str(err), color="red")
-
-        draw_snap_points(show=False)
-
 
     def start_placing():
         if not sel_prof.value:
             return
 
+        interaction_state["mode"] = "placing"
+
         placing_state.update({
-            "mode": "placing",
             "profile": sel_prof.value,
             "address": int(inp_addr.value),
             "name": inp_name.value or None,
             "hover_snap": None
         })
 
-        # Ghost erzeugen
+        create_ghost()
+
+        stage_container.style('cursor: crosshair;')
+        ui.notify("Fixture am Mauszeiger - auf Snap klicken")
+
+        draw_snap_points(show=True)
+
+    def handle_mouse_move(e):
+
+        # STAGE-lokale Koordinaten (NiceGUI korrekt)
+        x = int(e.args.get("offsetX", 0))
+        y = int(e.args.get("offsetY", 0))
+
+        # Platzieren
+        if interaction_state["mode"] == "placing":
+
+            if not ghost_fixture["el"]:
+                return
+
+            # Snap suchen
+            snap = find_nearest_snap(x, y)
+            placing_state["hover_snap"] = snap
+
+            # Snap-UI reset
+            for el in snap_points_ui.values():
+                el.style('transform: translate(-50%, -50%) scale(1); background: cyan;')
+
+            if snap:
+                t, sp_id = snap
+                sp = t.snap_points[sp_id]
+                snap_points_ui[(t, sp_id)].style(
+                    'transform: translate(-50%, -50%) scale(1.8); background: lime;'
+                )
+                update_ghost(sp["x"], sp["y"], snapped=True)
+
+            else:
+                update_ghost(x, y, snapped=False)
+
+        # Verschieben
+        elif interaction_state["mode"] == "dragging":
+            snap = find_nearest_snap(x, y)
+            placing_state["hover_snap"] = snap
+
+            # Highlight Logik wie beim placing
+            for el in snap_points_ui.values():
+                el.style('transform: translate(-50%, -50%) scale(1); background: cyan;')
+
+            if snap:
+                t, sp_id = snap
+                sp = t.snap_points[sp_id]
+                snap_points_ui[(t, sp_id)].style(
+                    'transform: translate(-50%, -50%) scale(1.8); background: lime;'
+                )                
+                update_ghost(sp["x"], sp["y"], snapped=True)
+
+            else:
+                update_ghost(x, y, snapped=False)
+
+            # Trash Hoverlook
+            if trash_bin(x, y):
+                trash_icon.style(
+                    'transform: scale(1.4); '
+                    'filter: brightness(1.3);'
+                )
+            else:
+                trash_icon.style(
+                    'transform: scale(1); '
+                    'filter: brightness(1);'
+                )
+
+    def create_ghost():
+        if ghost_fixture["el"]:
+            ghost_fixture["el"].delete()
+
         with stage_container:
             ghost_fixture["el"] = ui.element('div').style('''
                 position: absolute;
@@ -196,48 +380,6 @@ def create():
                 pointer-events: none;
                 z-index: 50;
             ''')
-
-        stage_container.style('cursor: crosshair;')
-        ui.notify("Fixture am Mauszeiger - auf Snap klicken")
-
-        draw_snap_points(show=True)
-
-
-    def handle_mouse_move(e):
-        if placing_state["mode"] != "placing":
-            return
-        if not ghost_fixture["el"]:
-            return
-
-        # STAGE-lokale Koordinaten (NiceGUI korrekt)
-        x = int(e.args.get("offsetX", 0))
-        y = int(e.args.get("offsetY", 0))
-
-
-        # Snap suchen
-        snap = find_nearest_snap(x, y)
-        placing_state["hover_snap"] = snap
-
-        # Snap-UI reset
-        for el in snap_points_ui:
-            el.style('transform: translate(-50%, -50%) scale(1); background: cyan;')
-
-        if snap:
-            t, sp_id = snap
-            sp = t.snap_points[sp_id]
-
-            update_ghost(sp["x"], sp["y"], snapped=True)
-
-            # Sicherer Zugriff auf das UI-Element
-            snap_points_ui[sp_id].style(
-                'transform: translate(-50%, -50%) scale(1.8); background: lime;'
-            )
-
-        else:
-            update_ghost(x, y, snapped=False)
-
-
-
 
     def update_ghost(x: int, y: int, snapped: bool = False):
         if not ghost_fixture["el"]:
@@ -253,7 +395,6 @@ def create():
             '''
         )
 
-    SNAP_RADIUS = 18
     def find_nearest_snap(x, y):
         best = None
         best_dist = SNAP_RADIUS
@@ -276,9 +417,9 @@ def create():
         if not show:
             return
 
-        with mouse_layer:
+        with snap_layer:
             for t in state.engine.traverses:
-                for sp in t.snap_points:
+                for i, sp in enumerate(t.snap_points):
                     el = ui.element('div').style(f'''
                         position: absolute;
                         left: {sp["x"]}px;
@@ -290,9 +431,8 @@ def create():
                         transform: translate(-50%, -50%);
                         pointer-events: none;
                     ''')
-                    snap_points_ui.append(el)
+                    snap_points_ui[(t, i)] = el
 
-        
 
     # Projekt IO
     def do_save():
@@ -302,17 +442,33 @@ def create():
 
     def do_load():
         data = load_project("projects/my_show.json")
-        if data:
-            fixtures_list=data.get("fixtures", [])
-            load_fixtures_from_json(fixtures_list, state.engine)
-            
-            #banken und szenen laden:
-            state.engine.banks=data.get("banks", [])            
-            
-            redraw_fixtures()
-            ui.notify("Geladen", color="green")
-        else:
+        if not data:
             ui.notify("Fehler beim Laden (Projektdatei nicht gefunden)", color="red")
+            return
+
+        # Traverses zuerst wiederherstellen
+        state.engine.traverses.clear()
+        for td in data.get("traverses", []):
+            t = Traverse(
+                x1=td["x1"],
+                y1=td["y1"],
+                x2=td["x2"],
+                y2=td["y2"],
+                snap_distance=td.get("snap_distance", 40),
+                name=td["name"]
+            )
+            state.engine.traverses.append(t)
+
+        # Fixtures laden und Traverses verbinden
+        fixtures_list = data.get("fixtures", [])
+        load_fixtures_from_json(fixtures_list, state.engine)
+
+        # Banken und Szenen laden
+        state.engine.banks = data.get("banks", [])
+
+        redraw_fixtures()
+        draw_traverses()
+        ui.notify("Geladen", color="green")
 
     def do_clear():
         # Dialog für alles löschen
@@ -329,21 +485,114 @@ def create():
                 ui.button("Nein", on_click=d.close).props('flat')
         d.open()
 
+    # UI-Optik
+    def draw_traverses():
+        traverse_layer.clear()
+
+        # SVG direkt im Layer
+        content = ""
+        with traverse_layer:
+            for t in state.engine.traverses:
+
+                # Rechteck rund um die Traverse (Abstand snap_distance/2)
+                d = t.snap_distance / 2
+                dx = t.x2 - t.x1
+                dy = t.y2 - t.y1
+
+                nx, ny = -dy, dx
+                length = (nx**2 + ny**2) ** 0.5
+                nx, ny = nx / length, ny / length
+
+                dx_n, dy_n = nx * d, ny * d
+
+                Ax, Ay = t.x1 + dx_n, t.y1 + dy_n
+                Bx, By = t.x2 + dx_n, t.y2 + dy_n
+                Cx, Cy = t.x2 - dx_n, t.y2 - dy_n
+                Dx, Dy = t.x1 - dx_n, t.y1 - dy_n
+
+                # Rechtecklinien
+                content += f'''
+                <line x1="{Ax}" y1="{Ay}" x2="{Bx}" y2="{By}" stroke="{getattr(t, 'color', 'grey')}" stroke-width="6"/>
+                <line x1="{Bx}" y1="{By}" x2="{Cx}" y2="{Cy}" stroke="{getattr(t, 'color', 'grey')}" stroke-width="6"/>
+                <line x1="{Cx}" y1="{Cy}" x2="{Dx}" y2="{Dy}" stroke="{getattr(t, 'color', 'grey')}" stroke-width="6"/>
+                <line x1="{Dx}" y1="{Dy}" x2="{Ax}" y2="{Ay}" stroke="{getattr(t, 'color', 'grey')}" stroke-width="6"/>
+                '''
+
+                corner_radius = 4  # Radius des Kreises
+
+                for (x, y) in [(Ax, Ay), (Bx, By), (Cx, Cy), (Dx, Dy)]:
+                    content += f'<circle cx="{x}" cy="{y}" r="{corner_radius}" fill="gray"/>'
+
+                #print(f"Traverse Linie: {t.x1},{t.y1} -> {t.x2},{t.y2}")
+                #print(f"Rechteck Eckpunkte: {(Ax, Ay)}, {(Bx, By)}, {(Cx, Cy)}, {(Dx, Dy)}")
+
+                # Obere Kante: Ax -> Bx
+                vec_top = (Bx - Ax, By - Ay)
+
+                # Untere Kante: Dx -> Cx
+                vec_bottom = (Cx - Dx, Cy - Dy)
+
+                len_top = np.sqrt(vec_top[0]**2 + vec_top[1]**2)
+                ux_top, uy_top = vec_top[0]/len_top, vec_top[1]/len_top
+
+                len_bottom = np.sqrt(vec_bottom[0]**2 + vec_bottom[1]**2)
+                ux_bottom, uy_bottom = vec_bottom[0]/len_bottom, vec_bottom[1]/len_bottom
+
+                num_steps = max(1, int(len_top // t.snap_distance))
+                for i in range(num_steps):
+                    t1 = i * t.snap_distance / len_top
+                    t2 = (i + 1) * t.snap_distance / len_top
+
+                    # obere Kante
+                    x_top_start = Ax + (Bx - Ax) * t1
+                    y_top_start = Ay + (By - Ay) * t1
+                    x_top_end = Ax + (Bx - Ax) * t2
+                    y_top_end = Ay + (By - Ay) * t2
+
+                    # untere Kante
+                    x_bottom_start = Dx + (Cx - Dx) * t1
+                    y_bottom_start = Dy + (Cy - Dy) * t1
+                    x_bottom_end = Dx + (Cx - Dx) * t2
+                    y_bottom_end = Dy + (Cy - Dy) * t2
+
+                    # X-Diagonalen
+                    content += f'<line x1="{x_top_start}" y1="{y_top_start}" x2="{x_bottom_end}" y2="{y_bottom_end}" stroke="grey" stroke-width="4"/>'
+                    content += f'<line x1="{x_bottom_start}" y1="{y_bottom_start}" x2="{x_top_end}" y2="{y_top_end}" stroke="grey" stroke-width="4"/>'
+
+
+            ui.html(f'''
+            <svg width="100%" height="100%" style="position:absolute; top:0; left:0; pointer-events:none; background:#fff;">
+                {content}
+            </svg>
+            ''', sanitize=False)
+
 
 # UI AUFBAU
 ################################################################################################
 
     with ui.element('div').style(
-        'position: relative; width: 1200px; height: 800px; overflow: hidden;  background: #111;' # border: 1px solid #333;
+        'position: relative; width: 1200px; height: 800px; overflow: hidden;  background: #fff;' # border: 1px solid #333;
     ) as stage_container:
         
         # Hintergrundbild (fängt Klicks ab)
-        ui.image('/static/traverse.png') \
-            .style('position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; pointer-events: none;') # object-fit: contain;
+        #ui.image('/static/traverse.png') \
+        #    .style('position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; object-fit: contain; pointer-events: none;') # object-fit: contain;
+        
+        traverse_layer = ui.element('div').style(
+            'position: absolute; top:0; left:0; width: 1200px; height: 800px; z-index: 5; pointer-events: none;'
+        )
+        
+        # Mülleimer UI (unten rechts)
+        trash_icon = ui.image('/static/icons8-full-trash-100-s.png').style(
+            'position: absolute; z-index: 15; bottom: 20px; right: 20px; '
+            'width: 50px; height: 50px; pointer-events: none;'
+            'pointer-events: none; '
+            'transition: transform 0.15s ease, filter 0.15s ease'
+        )
         
         # Snap Overlay (unsichtbar, aber fängt Mausbewegung ab)
         snap_layer = ui.element('div').style(
-            'position:absolute; inset:0; z-index:10; pointer-events: none;'
+            'position:absolute; top:0; left:0; width:1200px; height:800px; z-index:10; pointer-events: none;'
         )
 
         # Fixture Layer (darüberliegend)
@@ -357,11 +606,13 @@ def create():
         )
 
         mouse_layer.on('mousemove', handle_mouse_move)
+        mouse_layer.on('mouseup', handle_mouse_up)
         mouse_layer.on('click', handle_stage_click)
 
 
     # Initiale Zeichnung
     redraw_fixtures()
+    draw_traverses()
 
     ui.separator().classes('my-4')
 
@@ -402,8 +653,6 @@ def create():
         ui.button('Platzieren', on_click=start_placing, icon='add_location').props('color=primary')
 
         ui.separator().props('vertical')
-
-
 
         with ui.row():
             ui.button('Save', on_click=do_save, icon='save').props('flat')
