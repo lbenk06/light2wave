@@ -33,8 +33,8 @@
             "y": 240,
             "address": 1,
             "values": {
-                "dimmer": 0.0,
-                "red": 0.0,
+                "dimmer": 1.0,
+                "red": 1.0,
                 "green": 0.0,
                 "blue": 0.0,
                 "strobe": 0.0
@@ -43,30 +43,14 @@
             "snap_point_index": 1
         },
         {
-            "id": "led_par_6ch_3",
-            "profile": "led_par_6ch",
-            "x": 350,
-            "y": 240,
-            "address": 1,
-            "values": {
-                "dimmer": 0.0,
-                "red": 0.0,
-                "green": 0.0,
-                "blue": 0.0,
-                "strobe": 0.0
-            },
-            "traverse": "Front-Traverse",
-            "snap_point_index": 3
-        },
-        {
             "id": "led_par_6ch_4",
             "profile": "led_par_6ch",
             "x": 950,
             "y": 240,
             "address": 1,
             "values": {
-                "dimmer": 0.0,
-                "red": 0.0,
+                "dimmer": 1.0,
+                "red": 1.0,
                 "green": 0.0,
                 "blue": 0.0,
                 "strobe": 0.0
@@ -81,8 +65,8 @@
             "y": 240,
             "address": 1,
             "values": {
-                "dimmer": 0.0,
-                "red": 0.0,
+                "dimmer": 1.0,
+                "red": 1.0,
                 "green": 0.0,
                 "blue": 0.0,
                 "strobe": 0.0
@@ -97,8 +81,8 @@
             "y": 160,
             "address": 25,
             "values": {
-                "dimmer": 0.0,
-                "white": 0.0
+                "dimmer": 1.0,
+                "white": 1.0
             },
             "traverse": "Front-Traverse",
             "snap_point_index": 19
@@ -110,8 +94,8 @@
             "y": 160,
             "address": 25,
             "values": {
-                "dimmer": 0.0,
-                "white": 0.0
+                "dimmer": 1.0,
+                "white": 1.0
             },
             "traverse": "Front-Traverse",
             "snap_point_index": 31
@@ -123,10 +107,10 @@
             "y": 240,
             "address": 29,
             "values": {
-                "dimmer": 0.0,
+                "dimmer": 1.0,
                 "red": 0.0,
                 "green": 0.0,
-                "blue": 0.0,
+                "blue": 1.0,
                 "white": 0.0,
                 "pan": 0.0,
                 "tilt": 0.0,
@@ -139,14 +123,14 @@
         {
             "id": "moving_head_9ch_8",
             "profile": "moving_head_9ch",
-            "x": 700,
-            "y": 240,
+            "x": 700.0,
+            "y": 240.0,
             "address": 29,
             "values": {
-                "dimmer": 0.0,
+                "dimmer": 1.0,
                 "red": 0.0,
                 "green": 0.0,
-                "blue": 0.0,
+                "blue": 1.0,
                 "white": 0.0,
                 "pan": 0.0,
                 "tilt": 0.0,
@@ -163,12 +147,12 @@
             "y": 160,
             "address": 47,
             "values": {
-                "red": 0.0,
-                "green": 0.0,
+                "red": 1.0,
+                "green": 1.0,
                 "blue": 0.0,
                 "white": 0.0,
                 "strobe": 0.0,
-                "dimmer": 0.0
+                "dimmer": 1.0
             },
             "traverse": "Front-Traverse",
             "snap_point_index": 22
@@ -180,12 +164,12 @@
             "y": 160,
             "address": 47,
             "values": {
-                "red": 0.0,
-                "green": 0.0,
+                "red": 1.0,
+                "green": 1.0,
                 "blue": 0.0,
                 "white": 0.0,
                 "strobe": 0.0,
-                "dimmer": 0.0
+                "dimmer": 1.0
             },
             "traverse": "Front-Traverse",
             "snap_point_index": 28
@@ -193,12 +177,12 @@
         {
             "id": "Moving",
             "profile": "moving_head_9ch",
-            "x": 215.0,
-            "y": 325.0,
+            "x": 215,
+            "y": 325,
             "address": 63,
             "values": {
-                "dimmer": 0.0,
-                "red": 0.0,
+                "dimmer": 1.0,
+                "red": 1.0,
                 "green": 0.0,
                 "blue": 0.0,
                 "white": 0.0,
@@ -213,13 +197,13 @@
         {
             "id": "Moving",
             "profile": "moving_head_9ch",
-            "x": 215.0,
-            "y": 375.0,
+            "x": 215,
+            "y": 375,
             "address": 63,
             "values": {
-                "dimmer": 0.0,
+                "dimmer": 1.0,
                 "red": 0.0,
-                "green": 0.0,
+                "green": 1.0,
                 "blue": 0.0,
                 "white": 0.0,
                 "pan": 0.0,
@@ -233,14 +217,14 @@
         {
             "id": "Moving",
             "profile": "moving_head_9ch",
-            "x": 215.0,
-            "y": 425.0,
+            "x": 215,
+            "y": 425,
             "address": 63,
             "values": {
-                "dimmer": 0.0,
+                "dimmer": 1.0,
                 "red": 0.0,
                 "green": 0.0,
-                "blue": 0.0,
+                "blue": 1.0,
                 "white": 0.0,
                 "pan": 0.0,
                 "tilt": 0.0,
@@ -253,12 +237,12 @@
         {
             "id": "Moving",
             "profile": "moving_head_9ch",
-            "x": 985.0,
-            "y": 325.0,
+            "x": 985,
+            "y": 325,
             "address": 63,
             "values": {
-                "dimmer": 0.0,
-                "red": 0.0,
+                "dimmer": 1.0,
+                "red": 1.0,
                 "green": 0.0,
                 "blue": 0.0,
                 "white": 0.0,
@@ -273,13 +257,13 @@
         {
             "id": "Moving",
             "profile": "moving_head_9ch",
-            "x": 985.0,
-            "y": 375.0,
+            "x": 985,
+            "y": 375,
             "address": 63,
             "values": {
-                "dimmer": 0.0,
+                "dimmer": 1.0,
                 "red": 0.0,
-                "green": 0.0,
+                "green": 1.0,
                 "blue": 0.0,
                 "white": 0.0,
                 "pan": 0.0,
@@ -293,14 +277,14 @@
         {
             "id": "Moving",
             "profile": "moving_head_9ch",
-            "x": 985.0,
-            "y": 425.0,
+            "x": 985,
+            "y": 425,
             "address": 63,
             "values": {
-                "dimmer": 0.0,
+                "dimmer": 1.0,
                 "red": 0.0,
                 "green": 0.0,
-                "blue": 0.0,
+                "blue": 1.0,
                 "white": 0.0,
                 "pan": 0.0,
                 "tilt": 0.0,
@@ -309,6 +293,39 @@
             },
             "traverse": "Front-Right-Traverse",
             "snap_point_index": 5
+        },
+        {
+            "id": "strobo_16",
+            "profile": "strobo",
+            "x": 600,
+            "y": 240,
+            "address": 111,
+            "values": {
+                "dimmer": 1.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "white": 1.0,
+                "strobe": 0.0
+            },
+            "traverse": "Front-Traverse",
+            "snap_point_index": 8
+        },
+        {
+            "id": "led_par_6ch_17",
+            "profile": "led_par_6ch",
+            "x": 350,
+            "y": 240,
+            "address": 117,
+            "values": {
+                "dimmer": 1.0,
+                "red": 1.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "strobe": 0.0
+            },
+            "traverse": "Front-Traverse",
+            "snap_point_index": 3
         }
     ],
     "banks": []

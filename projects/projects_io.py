@@ -21,13 +21,8 @@ def save_project(engine, filename):
         # oder holen sie aus dem Profile-Dict
         pid = getattr(f, "profile_id", f.profile.get("profile_id"))
 
-        #traverse_name = getattr(f, "traverse", None)
-        #if traverse_name is not None:
-        #    traverse_name = f.traverse.name
         traverse_name = f.traverse.name if f.traverse else None
         snap_point_index = f.snap_point if f.snap_point is not None else None
-        #traverse_name = getattr(f, "name", None)
-        #snap_point_index = getattr(f, "snap_point", None)
 
         project_dict["fixtures"].append({
             "id": f.id,

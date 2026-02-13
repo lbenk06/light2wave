@@ -12,5 +12,35 @@
                 "role": "white"
             }
         ]
+    },
+    "strobo": {
+        "profile_id": "strobo",
+        "name": "Strobo",
+        "channels": [
+            {
+                "name": "Dimmer",
+                "role": "dimmer"
+            },
+            {
+                "name": "Red",
+                "role": "red"
+            },
+            {
+                "name": "Green",
+                "role": "green"
+            },
+            {
+                "name": "Blue",
+                "role": "blue"
+            },
+            {
+                "name": "White",
+                "role": "white"
+            },
+            {
+                "name": "Strobe",
+                "role": "strobe"
+            }
+        ]
     }
 }

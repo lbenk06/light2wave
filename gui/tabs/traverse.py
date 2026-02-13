@@ -1,8 +1,9 @@
 from nicegui import ui
 from gui.state import state
 from projects.projects_io import save_project, load_project, load_fixtures_from_json
-from engine.traverse1 import Traverse 
+from engine.traverse_snap import Traverse 
 from nicegui import run
+from fixtures.fixture import Fixture
 import numpy as np
 import os
 
@@ -107,7 +108,7 @@ def create():
                     ui.tooltip(f"{fixture.id} (Addr: {fixture.address})")
                     
                     # Text-Label
-                    ui.label(f'{fixture.id}\n{fixture.address}').style('''
+                    ui.label(f'{fixture.id}--{fixture.address}').style('''
                         position: absolute;
                         top: 26px;
                         left: 50%;
@@ -116,9 +117,12 @@ def create():
                         color: black;
                         pointer-events: none;
                         text-align: center;
-                        white-space: nowrap;
+                        white-space: pre;
+                        background-color: white;
+                        padding: 0px 2px;
+                        border-radius: 4px;
+                        box-shadow: 0 1px 4px rgba(0,0,0,0.3);
                     ''')
-                    #text-shadow: 1px 1px 1px black;
                 
                 # Referenz speichern für Farb-Updates
                 container_refs["elements"][fixture] = el
@@ -522,9 +526,6 @@ def create():
 
                 for (x, y) in [(Ax, Ay), (Bx, By), (Cx, Cy), (Dx, Dy)]:
                     content += f'<circle cx="{x}" cy="{y}" r="{corner_radius}" fill="gray"/>'
-
-                #print(f"Traverse Linie: {t.x1},{t.y1} -> {t.x2},{t.y2}")
-                #print(f"Rechteck Eckpunkte: {(Ax, Ay)}, {(Bx, By)}, {(Cx, Cy)}, {(Dx, Dy)}")
 
                 # Obere Kante: Ax -> Bx
                 vec_top = (Bx - Ax, By - Ay)
