@@ -6,8 +6,8 @@ from gui.tabs import live, audio, fixtures, traverse, scenes, dmx
 def create_app():
     ui.page_title('Light2Wave')
 
-    state.load_project("projects/my_show.json")
-    state.load_events()
+    #state.load_project("projects/my_show.json")
+    #state.load_events()
 
     with ui.tabs().classes('w-full') as tabs:
         tab_live = ui.tab('LIVE')

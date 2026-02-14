@@ -1,7 +1,9 @@
 from nicegui import ui
 from gui.state import state
+from projects.projects_io import save_project, load_project, load_fixtures_from_json
 
 def create():
+    
     # Initialisieren
     if not hasattr(state.engine, 'banks'):
         state.engine.banks = []
@@ -34,6 +36,8 @@ def create():
         
         new_bank = {"name": inp_bank_name.value, "scenes": []}
         state.engine.banks.append(new_bank)
+        # bank auch in der json speichern
+        save_project(state.engine, "projects/my_show.json")
         current_bank_index = len(state.engine.banks) - 1
         
         inp_bank_name.value = ""
@@ -47,6 +51,8 @@ def create():
         
         deleted_name = state.engine.banks[current_bank_index]["name"]
         state.engine.banks.pop(current_bank_index)
+        #auch aus der json löschen
+        save_project(state.engine, "projects/my_show.json")
         current_bank_index = 0 if state.engine.banks else -1
         
         refresh_ui()
@@ -78,6 +84,8 @@ def create():
         }
 
         state.engine.banks[current_bank_index]["scenes"].append(new_scene)
+        # Szene auch in der json speichern
+        save_project(state.engine, "projects/my_show.json")
         inp_scene_name.value = ""
         
         refs["scene_grid"].clear()
@@ -107,6 +115,8 @@ def create():
         
         if scene in bank["scenes"]:
             bank["scenes"].remove(scene)
+            # Szene auch aus der json löschen
+            save_project(state.engine, "projects/my_show.json")
             # UI neu zeichnen
             refs["scene_grid"].clear()
             draw_playback_area()
@@ -162,6 +172,9 @@ def create():
                 refs["bank_tabs"].value = current_bank_index
 
     def draw_playback_area():
+        
+        refs["scene_grid"].clear()
+        
         with refs["scene_grid"]:
             if current_bank_index == -1 or not state.engine.banks:
                 ui.label('Keine Bank ausgewählt.').classes('text-gray-500 italic')

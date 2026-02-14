@@ -105,3 +105,14 @@ def load_fixtures_from_json(fixture_list_data, engine):
         count += 1
     
     print(f"{count} Geräte erfolgreich geladen.")
+
+
+def load_banks_from_json(bank_list_data, engine):
+    """Lädt die Banks und Szenen aus der JSON"""
+    if bank_list_data is None:
+        bank_list_data=[]
+        
+    #in die engine laden
+    engine.banks=bank_list_data
+
+    print(f"{len(engine.banks)} Banks erfolgreich geladen.")
