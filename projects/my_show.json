@@ -29,85 +29,85 @@
         {
             "id": "led_par_6ch_4",
             "profile": "led_par_6ch",
-            "x": 250,
-            "y": 240,
+            "x": 250.0,
+            "y": 240.0,
             "address": 1,
             "values": {
-                "dimmer": 1.0,
-                "red": 1.0,
-                "green": 1.0,
-                "blue": 1.0,
-                "strobe": 0.0
-            },
-            "traverse": "Front-Traverse",
-            "snap_point_index": 1
-        },
-        {
-            "id": "led_par_6ch_4",
-            "profile": "led_par_6ch",
-            "x": 950,
-            "y": 240,
-            "address": 1,
-            "values": {
-                "dimmer": 1.0,
-                "red": 1.0,
-                "green": 1.0,
-                "blue": 0.0,
-                "strobe": 0.0
-            },
-            "traverse": "Front-Traverse",
-            "snap_point_index": 15
-        },
-        {
-            "id": "led_par_6ch_4",
-            "profile": "led_par_6ch",
-            "x": 850,
-            "y": 240,
-            "address": 1,
-            "values": {
-                "dimmer": 1.0,
+                "dimmer": 0.0,
                 "red": 0.0,
-                "green": 1.0,
+                "green": 0.0,
                 "blue": 0.0,
                 "strobe": 0.0
             },
-            "traverse": "Front-Traverse",
-            "snap_point_index": 13
+            "traverse": null,
+            "snap_point_index": null
+        },
+        {
+            "id": "led_par_6ch_4",
+            "profile": "led_par_6ch",
+            "x": 950.0,
+            "y": 240.0,
+            "address": 1,
+            "values": {
+                "dimmer": 0.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "strobe": 0.0
+            },
+            "traverse": null,
+            "snap_point_index": null
+        },
+        {
+            "id": "led_par_6ch_4",
+            "profile": "led_par_6ch",
+            "x": 850.0,
+            "y": 240.0,
+            "address": 1,
+            "values": {
+                "dimmer": 0.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "strobe": 0.0
+            },
+            "traverse": null,
+            "snap_point_index": null
         },
         {
             "id": "blinder_5",
             "profile": "blinder",
-            "x": 300,
-            "y": 160,
+            "x": 300.0,
+            "y": 160.0,
             "address": 25,
             "values": {
-                "dimmer": 1.0,
+                "dimmer": 0.0,
                 "white": 1.0
             },
-            "traverse": "Front-Traverse",
-            "snap_point_index": 19
+            "traverse": null,
+            "snap_point_index": null
         },
         {
             "id": "blinder_6",
             "profile": "blinder",
-            "x": 900,
-            "y": 160,
+            "x": 900.0,
+            "y": 160.0,
             "address": 25,
             "values": {
-                "dimmer": 1.0,
+                "dimmer": 0.0,
                 "white": 1.0
             },
-            "traverse": "Front-Traverse",
-            "snap_point_index": 31
+            "traverse": null,
+            "snap_point_index": null
         },
         {
             "id": "moving_head_9ch_7",
             "profile": "moving_head_9ch",
-            "x": 500,
-            "y": 240,
+            "x": 500.0,
+            "y": 240.0,
             "address": 29,
             "values": {
-                "dimmer": 1.0,
+                "dimmer": 0.0,
                 "red": 0.0,
                 "green": 0.0,
                 "blue": 1.0,
@@ -117,18 +117,18 @@
                 "strobe": 0.0,
                 "speed": 0.0
             },
-            "traverse": "Front-Traverse",
-            "snap_point_index": 6
+            "traverse": null,
+            "snap_point_index": null
         },
         {
             "id": "moving_head_9ch_8",
             "profile": "moving_head_9ch",
-            "x": 700,
-            "y": 240,
+            "x": 700.0,
+            "y": 240.0,
             "address": 29,
             "values": {
-                "dimmer": 1.0,
-                "red": 1.0,
+                "dimmer": 0.0,
+                "red": 0.0,
                 "green": 0.0,
                 "blue": 1.0,
                 "white": 0.0,
@@ -137,31 +137,14 @@
                 "strobe": 0.0,
                 "speed": 0.0
             },
-            "traverse": "Front-Traverse",
-            "snap_point_index": 10
+            "traverse": null,
+            "snap_point_index": null
         },
         {
             "id": "Fluter",
             "profile": "led_fluter_8ch",
-            "x": 450,
-            "y": 160,
-            "address": 47,
-            "values": {
-                "red": 1.0,
-                "green": 1.0,
-                "blue": 1.0,
-                "white": 0.0,
-                "strobe": 0.0,
-                "dimmer": 1.0
-            },
-            "traverse": "Front-Traverse",
-            "snap_point_index": 22
-        },
-        {
-            "id": "Fluter",
-            "profile": "led_fluter_8ch",
-            "x": 750,
-            "y": 160,
+            "x": 450.0,
+            "y": 160.0,
             "address": 47,
             "values": {
                 "red": 1.0,
@@ -171,14 +154,31 @@
                 "strobe": 0.0,
                 "dimmer": 1.0
             },
-            "traverse": "Front-Traverse",
-            "snap_point_index": 28
+            "traverse": null,
+            "snap_point_index": null
+        },
+        {
+            "id": "Fluter",
+            "profile": "led_fluter_8ch",
+            "x": 750.0,
+            "y": 160.0,
+            "address": 47,
+            "values": {
+                "red": 1.0,
+                "green": 1.0,
+                "blue": 0.0,
+                "white": 0.0,
+                "strobe": 0.0,
+                "dimmer": 1.0
+            },
+            "traverse": null,
+            "snap_point_index": null
         },
         {
             "id": "Moving",
             "profile": "moving_head_9ch",
-            "x": 215,
-            "y": 325,
+            "x": 215.0,
+            "y": 325.0,
             "address": 63,
             "values": {
                 "dimmer": 1.0,
@@ -191,14 +191,14 @@
                 "strobe": 0.0,
                 "speed": 0.0
             },
-            "traverse": "Front-Left-Traverse",
-            "snap_point_index": 12
+            "traverse": null,
+            "snap_point_index": null
         },
         {
             "id": "Moving",
             "profile": "moving_head_9ch",
-            "x": 215,
-            "y": 375,
+            "x": 215.0,
+            "y": 375.0,
             "address": 63,
             "values": {
                 "dimmer": 1.0,
@@ -211,14 +211,14 @@
                 "strobe": 0.0,
                 "speed": 0.0
             },
-            "traverse": "Front-Left-Traverse",
-            "snap_point_index": 13
+            "traverse": null,
+            "snap_point_index": null
         },
         {
             "id": "Moving",
             "profile": "moving_head_9ch",
-            "x": 215,
-            "y": 425,
+            "x": 215.0,
+            "y": 425.0,
             "address": 63,
             "values": {
                 "dimmer": 1.0,
@@ -231,14 +231,14 @@
                 "strobe": 0.0,
                 "speed": 0.0
             },
-            "traverse": "Front-Left-Traverse",
-            "snap_point_index": 14
+            "traverse": null,
+            "snap_point_index": null
         },
         {
             "id": "Moving",
             "profile": "moving_head_9ch",
-            "x": 985,
-            "y": 325,
+            "x": 985.0,
+            "y": 325.0,
             "address": 63,
             "values": {
                 "dimmer": 1.0,
@@ -251,14 +251,14 @@
                 "strobe": 0.0,
                 "speed": 0.0
             },
-            "traverse": "Front-Right-Traverse",
-            "snap_point_index": 3
+            "traverse": null,
+            "snap_point_index": null
         },
         {
             "id": "Moving",
             "profile": "moving_head_9ch",
-            "x": 985,
-            "y": 375,
+            "x": 985.0,
+            "y": 375.0,
             "address": 63,
             "values": {
                 "dimmer": 1.0,
@@ -271,14 +271,14 @@
                 "strobe": 0.0,
                 "speed": 0.0
             },
-            "traverse": "Front-Right-Traverse",
-            "snap_point_index": 4
+            "traverse": null,
+            "snap_point_index": null
         },
         {
             "id": "Moving",
             "profile": "moving_head_9ch",
-            "x": 985,
-            "y": 425,
+            "x": 985.0,
+            "y": 425.0,
             "address": 63,
             "values": {
                 "dimmer": 1.0,
@@ -291,14 +291,14 @@
                 "strobe": 0.0,
                 "speed": 0.0
             },
-            "traverse": "Front-Right-Traverse",
-            "snap_point_index": 5
+            "traverse": null,
+            "snap_point_index": null
         },
         {
             "id": "strobo_16",
             "profile": "strobo",
-            "x": 600,
-            "y": 240,
+            "x": 600.0,
+            "y": 240.0,
             "address": 111,
             "values": {
                 "dimmer": 1.0,
@@ -308,14 +308,14 @@
                 "white": 1.0,
                 "strobe": 0.0
             },
-            "traverse": "Front-Traverse",
-            "snap_point_index": 8
+            "traverse": null,
+            "snap_point_index": null
         },
         {
             "id": "led_par_6ch_17",
             "profile": "led_par_6ch",
-            "x": 350,
-            "y": 240,
+            "x": 350.0,
+            "y": 240.0,
             "address": 117,
             "values": {
                 "dimmer": 1.0,
@@ -324,8 +324,328 @@
                 "blue": 0.0,
                 "strobe": 0.0
             },
-            "traverse": "Front-Traverse",
-            "snap_point_index": 3
+            "traverse": null,
+            "snap_point_index": null
+        },
+        {
+            "id": "led_par_6ch_18",
+            "profile": "led_par_6ch",
+            "x": 135.0,
+            "y": 475.0,
+            "address": 1,
+            "values": {
+                "dimmer": 0.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "strobe": 0.0
+            },
+            "traverse": null,
+            "snap_point_index": null
+        },
+        {
+            "id": "led_par_6ch_19",
+            "profile": "led_par_6ch",
+            "x": 135.0,
+            "y": 525.0,
+            "address": 1,
+            "values": {
+                "dimmer": 0.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "strobe": 0.0
+            },
+            "traverse": null,
+            "snap_point_index": null
+        },
+        {
+            "id": "led_par_6ch_20",
+            "profile": "led_par_6ch",
+            "x": 135.0,
+            "y": 575.0,
+            "address": 1,
+            "values": {
+                "dimmer": 0.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "strobe": 0.0
+            },
+            "traverse": null,
+            "snap_point_index": null
+        },
+        {
+            "id": "led_par_6ch_21",
+            "profile": "led_par_6ch",
+            "x": 215.0,
+            "y": 575.0,
+            "address": 1,
+            "values": {
+                "dimmer": 0.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "strobe": 0.0
+            },
+            "traverse": null,
+            "snap_point_index": null
+        },
+        {
+            "id": "led_par_6ch_22",
+            "profile": "led_par_6ch",
+            "x": 215.0,
+            "y": 525.0,
+            "address": 1,
+            "values": {
+                "dimmer": 0.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "strobe": 0.0
+            },
+            "traverse": null,
+            "snap_point_index": null
+        },
+        {
+            "id": "led_par_6ch_23",
+            "profile": "led_par_6ch",
+            "x": 215.0,
+            "y": 475.0,
+            "address": 1,
+            "values": {
+                "dimmer": 0.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "strobe": 0.0
+            },
+            "traverse": null,
+            "snap_point_index": null
+        },
+        {
+            "id": "led_par_6ch_24",
+            "profile": "led_par_6ch",
+            "x": 135.0,
+            "y": 425.0,
+            "address": 1,
+            "values": {
+                "dimmer": 0.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "strobe": 0.0
+            },
+            "traverse": null,
+            "snap_point_index": null
+        },
+        {
+            "id": "led_par_6ch_25",
+            "profile": "led_par_6ch",
+            "x": 135.0,
+            "y": 375.0,
+            "address": 1,
+            "values": {
+                "dimmer": 0.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "strobe": 0.0
+            },
+            "traverse": null,
+            "snap_point_index": null
+        },
+        {
+            "id": "led_par_6ch_26",
+            "profile": "led_par_6ch",
+            "x": 135.0,
+            "y": 325.0,
+            "address": 1,
+            "values": {
+                "dimmer": 0.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "strobe": 0.0
+            },
+            "traverse": null,
+            "snap_point_index": null
+        },
+        {
+            "id": "led_par_6ch_27",
+            "profile": "led_par_6ch",
+            "x": 135.0,
+            "y": 275.0,
+            "address": 1,
+            "values": {
+                "dimmer": 0.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "strobe": 0.0
+            },
+            "traverse": null,
+            "snap_point_index": null
+        },
+        {
+            "id": "led_par_6ch_28",
+            "profile": "led_par_6ch",
+            "x": 215.0,
+            "y": 275.0,
+            "address": 1,
+            "values": {
+                "dimmer": 0.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "strobe": 0.0
+            },
+            "traverse": null,
+            "snap_point_index": null
+        },
+        {
+            "id": "led_par_6ch_29",
+            "profile": "led_par_6ch",
+            "x": 135.0,
+            "y": 225.0,
+            "address": 1,
+            "values": {
+                "dimmer": 0.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "strobe": 0.0
+            },
+            "traverse": null,
+            "snap_point_index": null
+        },
+        {
+            "id": "led_par_6ch_30",
+            "profile": "led_par_6ch",
+            "x": 135.0,
+            "y": 175.0,
+            "address": 1,
+            "values": {
+                "dimmer": 0.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "strobe": 0.0
+            },
+            "traverse": null,
+            "snap_point_index": null
+        },
+        {
+            "id": "led_par_6ch_31",
+            "profile": "led_par_6ch",
+            "x": 200.0,
+            "y": 160.0,
+            "address": 1,
+            "values": {
+                "dimmer": 0.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "strobe": 0.0
+            },
+            "traverse": null,
+            "snap_point_index": null
+        },
+        {
+            "id": "led_par_6ch_32",
+            "profile": "led_par_6ch",
+            "x": 250.0,
+            "y": 160.0,
+            "address": 1,
+            "values": {
+                "dimmer": 0.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "strobe": 0.0
+            },
+            "traverse": null,
+            "snap_point_index": null
+        },
+        {
+            "id": "led_par_6ch_33",
+            "profile": "led_par_6ch",
+            "x": 1000.0,
+            "y": 160.0,
+            "address": 1,
+            "values": {
+                "dimmer": 0.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "strobe": 0.0
+            },
+            "traverse": null,
+            "snap_point_index": null
+        },
+        {
+            "id": "led_par_6ch_34",
+            "profile": "led_par_6ch",
+            "x": 1065.0,
+            "y": 175.0,
+            "address": 1,
+            "values": {
+                "dimmer": 0.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "strobe": 0.0
+            },
+            "traverse": null,
+            "snap_point_index": null
+        },
+        {
+            "id": "led_par_6ch_35",
+            "profile": "led_par_6ch",
+            "x": 1065.0,
+            "y": 225.0,
+            "address": 1,
+            "values": {
+                "dimmer": 0.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "strobe": 0.0
+            },
+            "traverse": null,
+            "snap_point_index": null
+        },
+        {
+            "id": "led_par_6ch_36",
+            "profile": "led_par_6ch",
+            "x": 985.0,
+            "y": 575.0,
+            "address": 1,
+            "values": {
+                "dimmer": 0.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "strobe": 0.0
+            },
+            "traverse": null,
+            "snap_point_index": null
+        },
+        {
+            "id": "led_par_6ch_37",
+            "profile": "led_par_6ch",
+            "x": 1065.0,
+            "y": 575.0,
+            "address": 1,
+            "values": {
+                "dimmer": 0.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "strobe": 0.0
+            },
+            "traverse": null,
+            "snap_point_index": null
         }
     ],
     "banks": [
@@ -478,6 +798,222 @@
                         "led_par_6ch_17": {
                             "dimmer": 1.0,
                             "red": 1.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        }
+                    }
+                },
+                {
+                    "name": "eine gruen",
+                    "data": {
+                        "led_par_6ch_4": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "blinder_5": {
+                            "dimmer": 0.0,
+                            "white": 0.0
+                        },
+                        "blinder_6": {
+                            "dimmer": 0.0,
+                            "white": 0.0
+                        },
+                        "moving_head_9ch_7": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "pan": 0.0,
+                            "tilt": 0.0,
+                            "strobe": 0.0,
+                            "speed": 0.0
+                        },
+                        "moving_head_9ch_8": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "pan": 0.0,
+                            "tilt": 0.0,
+                            "strobe": 0.0,
+                            "speed": 0.0
+                        },
+                        "Fluter": {
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "strobe": 0.0,
+                            "dimmer": 0.0
+                        },
+                        "Moving": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "pan": 0.0,
+                            "tilt": 0.0,
+                            "strobe": 0.0,
+                            "speed": 0.0
+                        },
+                        "strobo_16": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "strobe": 0.0
+                        },
+                        "led_par_6ch_17": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "led_par_6ch_18": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "led_par_6ch_19": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "led_par_6ch_20": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "led_par_6ch_21": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "led_par_6ch_22": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "led_par_6ch_23": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "led_par_6ch_24": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "led_par_6ch_25": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "led_par_6ch_26": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "led_par_6ch_27": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "led_par_6ch_28": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "led_par_6ch_29": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "led_par_6ch_30": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "led_par_6ch_31": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "led_par_6ch_32": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "led_par_6ch_33": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "led_par_6ch_34": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "led_par_6ch_35": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "led_par_6ch_36": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "led_par_6ch_37": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
                             "green": 0.0,
                             "blue": 0.0,
                             "strobe": 0.0

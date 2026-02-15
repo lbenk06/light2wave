@@ -1,24 +1,57 @@
 [
-  {
-    "name": "ALL OFF",
-    "roles": {
-      "dimmer": 0
+    {
+        "name": "BLINDER HIT",
+        "type": "flash",
+        "params": {
+            "generator": "flash_decay",
+            "target_role": "white",
+            "speed": 2.0  
+        },
+        "roles": {
+            "dimmer": 1.0 
+        }
+    },
+  
+    {
+        "name": "ALLES ROT",
+        "type": "static",
+        "roles": { "red": 1.0, "green": 0.0, "blue": 0.0, "dimmer": 1.0 }
+    },
+    {
+        "name": "Gate Explosion",
+        "type": "dynamic",
+        "params": {
+            "generator": "gate_pulse",
+            "target_role": "dimmer",
+            "speed": 6.0,
+            "width": 8.0
+        },
+        "roles": { "blue": 1.0, "red": 0.0 } 
+    },
+    {
+        "name": "Symmetrie Rot",
+        "type": "dynamic",
+        "params": {
+            "generator": "center_sym",
+            "target_role": "red",
+            "speed": 3.0,
+            "width": 4.0
+        },
+        "roles": { "dimmer": 1.0, "blue": 0.0 }
+    },
+    {
+        "name": "Random Sparkle",
+        "type": "dynamic",
+        "params": {
+            "generator": "sparkle",
+            "target_role": "dimmer",
+            "speed": 2.0
+        },
+        "roles": { "white": 1.0 }
+    },
+    {
+        "name": "STOP ALL",
+        "type": "stop_all",
+        "roles": {} 
     }
-  },
-  {
-    "name": "ALL RED",
-    "roles": {
-      "red": 1,
-      "green": 0,
-      "blue": 0,
-      "dimmer": 1
-    }
-  },
-  {
-    "name": "BLINDER HIT",
-    "roles": {
-      "white": 1,
-      "dimmer": 1
-    }
-  }
 ]

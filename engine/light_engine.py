@@ -12,6 +12,9 @@ class LightEngine:
         self.traverses = []
         self.profiles = ALL_PROFILES.copy()
 
+        self.banks=[] #wird von projects_io geladen
+        self.active_overlays=[] #laufende Events
+
         self.load_user_profiles()
 
 
@@ -34,7 +37,12 @@ class LightEngine:
         self.fixtures.append(fixture)
 
     def render(self):
-        """Rendert alle Fixtures ins Universe"""
+        """Rendert alle Fixtures und Events ins Universe"""
+        #1. Events
+        for event in self.active_overlays[:]:
+            event.update(self)
+
+        #2. Fixtures
         self.universe.clear()
         for fixture in self.fixtures:
             fixture.render(self.universe.channels)

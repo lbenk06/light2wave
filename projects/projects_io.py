@@ -81,8 +81,8 @@ def load_fixtures_from_json(fixture_list_data, engine):
             fixture_id=f_data["id"],
             profile=profile_dict,
             address=f_data["address"],
-            x=int(f_data.get("x", 0)),
-            y=int(f_data.get("y", 0))
+            x=float(f_data.get("x", 0.0)),
+            y=float(f_data.get("y", 0.0))
         )        
 
         if "values" in f_data:
