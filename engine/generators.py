@@ -5,7 +5,7 @@ import random
 #Bühnengröße später dynamisch anpassbar machen
 
 STAGE_WIDTH=1200.0
-STAGE_DEPTH=800.0
+STAGE_HEIGHT=800.0
 
 
 #Mitte der Front Traverse

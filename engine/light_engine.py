@@ -17,6 +17,9 @@ class LightEngine:
 
         self.load_user_profiles()
 
+        #inteface
+        self.dmx_controller=None
+
 
     def load_user_profiles(self):
         """Lädt eigene Profile aus der JSON-Datei"""
@@ -87,3 +90,16 @@ class LightEngine:
         """
         used = sum(len(f.profile["channels"]) for f in self.fixtures)
         return used + 1  # DMX ist 1-basiert
+
+
+
+    def connect_dmx(self, port):
+        """Verbindet die Engine mit unserem Enttec Pro DMX INterface"""
+        from DMXEnttecPro import DMXEnttecPro
+        try:
+            self.dmx_controller=Controller(port)
+            print(f"DMX-Interface an {port} verbunden.")
+
+        except Exception as e:
+            print(f"DMX Fehler: {e}")
+            return False

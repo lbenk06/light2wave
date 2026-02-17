@@ -1,7 +1,7 @@
 import json
 import time
 from pathlib import Path
-from .generators import GENERATOR_MAP
+from engine.generators import GENERATOR_MAP
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
