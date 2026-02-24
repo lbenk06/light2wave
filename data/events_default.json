@@ -2,31 +2,38 @@
     {
         "name": "BLINDER HIT",
         "type": "flash",
+        "roles": {
+            "dimmer": 1.0
+        },
         "params": {
             "generator": "flash_decay",
             "target_role": "white",
-            "speed": 2.0  
-        },
-        "roles": {
-            "dimmer": 1.0 
+            "speed": 1.0,
+            "width": 0.1
         }
     },
-  
     {
         "name": "ALLES ROT",
         "type": "static",
-        "roles": { "red": 1.0, "green": 0.0, "blue": 0.0, "dimmer": 1.0 }
+        "roles": {
+            "red": 1.0,
+            "green": 0.0,
+            "blue": 0.0,
+            "dimmer": 1.0
+        }
     },
     {
         "name": "Gate Explosion",
         "type": "dynamic",
+        "roles": {
+            "blue": 1.0
+        },
         "params": {
             "generator": "gate_pulse",
             "target_role": "dimmer",
             "speed": 6.0,
             "width": 8.0
-        },
-        "roles": { "blue": 1.0, "red": 0.0 } 
+        }
     },
     {
         "name": "Symmetrie Rot",
@@ -37,21 +44,185 @@
             "speed": 3.0,
             "width": 4.0
         },
-        "roles": { "dimmer": 1.0, "blue": 0.0 }
+        "roles": {
+            "dimmer": 1.0,
+            "blue": 0.0
+        }
     },
     {
         "name": "Random Sparkle",
         "type": "dynamic",
+        "roles": {
+            "green": 1.0
+        },
         "params": {
             "generator": "sparkle",
             "target_role": "dimmer",
+            "speed": 0.5,
+            "width": 2.0
+        }
+    },
+    {
+        "name": "Knight Rider",
+        "type": "dynamic",
+        "params": {
+            "generator": "scanner",
+            "target_role": "red",
+            "speed": 2.5,
+            "width": 3.0
+        },
+        "roles": {
+            "dimmer": 1.0
+        }
+    },
+    {
+        "name": "Strobo Hart",
+        "type": "dynamic",
+        "params": {
+            "generator": "strobe",
+            "target_role": "dimmer",
+            "speed": 12.0,
+            "width": 0.3
+        }
+    },
+    {
+        "name": "Heartbeat",
+        "type": "dynamic",
+        "params": {
+            "generator": "heartbeat",
+            "target_role": "dimmer",
+            "speed": 1.2
+        },
+        "roles": {
+            "red": 1.0,
+            "blue": 0.0,
+            "green": 0.0
+        }
+    },
+    {
+        "name": "Vertical Rain",
+        "type": "dynamic",
+        "params": {
+            "generator": "vertical_wave",
+            "target_role": "dimmer",
+            "speed": 4.0,
+            "width": 6.0
+        },
+        "roles": {
+            "green": 1.0,
+            "red": 0.0,
+            "blue": 0.0
+        }
+    },
+    {
+        "name": "Plasma Flow",
+        "type": "dynamic",
+        "params": {
+            "generator": "plasma",
+            "target_role": "dimmer",
+            "speed": 2.0,
+            "width": 4.0
+        }
+    },
+    {
+        "name": "Hard Chase",
+        "type": "dynamic",
+        "params": {
+            "generator": "hard_chase",
+            "target_role": "dimmer",
+            "speed": 3.0,
+            "width": 8.0
+        }
+    },
+    {
+        "name": "Feuer Flackern",
+        "type": "dynamic",
+        "params": {
+            "generator": "flicker",
+            "target_role": "dimmer",
             "speed": 2.0
         },
-        "roles": { "white": 1.0 }
+        "roles": {
+            "red": 1.0,
+            "green": 0.5,
+            "blue": 0.0
+        }
     },
     {
         "name": "STOP ALL",
         "type": "stop_all",
-        "roles": {} 
+        "roles": {}
+    },
+    {
+        "name": "rotes langsames blinken",
+        "type": "dynamic",
+        "roles": {
+            "red": 1.0,
+            "green": 0.4,
+            "dimmer": 1.0
+        },
+        "params": {
+            "generator": "breathing",
+            "target_role": "dimmer",
+            "speed": 2.0,
+            "width": 2.0
+        }
+    },
+    {
+        "name": "langsamer blinder weiss",
+        "type": "flash",
+        "roles": {
+            "white": 1.0,
+            "dimmer": 1.0
+        },
+        "params": {
+            "generator": "flash_decay",
+            "target_role": "dimmer",
+            "speed": 5.0,
+            "width": 5.0
+        }
+    },
+    {
+        "name": "roter blinder langsam",
+        "type": "flash",
+        "roles": {
+            "red": 1.0,
+            "dimmer": 1.0
+        },
+        "params": {
+            "generator": "flash_decay",
+            "target_role": "dimmer",
+            "speed": 15.0,
+            "width": 15.0
+        }
+    },
+    {
+        "name": "lila blind",
+        "type": "flash",
+        "roles": {
+            "red": 1.0,
+            "blue": 1.0,
+            "dimmer": 1.0
+        },
+        "params": {
+            "generator": "flash_decay",
+            "target_role": "dimmer",
+            "speed": 0.1,
+            "width": 0.1
+        }
+    },
+    {
+        "name": "gr\u00fcnerblind",
+        "type": "flash",
+        "roles": {
+            "green": 1.0,
+            "dimmer": 1.0
+        },
+        "params": {
+            "generator": "flash_decay",
+            "target_role": "dimmer",
+            "speed": 8.0,
+            "width": 8.0
+        }
     }
 ]

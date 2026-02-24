@@ -123,28 +123,101 @@ def gen_random_sparkle(fixture, t, speed=1.0, width=0.0):
     return 0.0
 
 
-def gen_flash_decay(fixture, t, speed=1.0, width=0.0):
+def gen_flash_decay(fixture, t, speed=1.0, width=5.0):
     """
-    Simuliert einen Blinder-Schlag (Hit).
-    - Attack: Geht extrem schnell an (0.05s).
-    - Decay: Glüht langsam aus (exponentiell).
+    speed: Steuert das Aufblenden (Attack). Höher = schneller hell.
+    width: Steuert das Ausblenden (Decay). Höher = schneller dunkel.
     """
-    # 1. Attack Phase (0 bis 0.05 Sekunden) -> Schnell hochfahren
-    attack_time = 0.05
-    if t < attack_time:
-        # Lineares Fade-In von 0 auf 1
-        return t / attack_time
+    # 1. Attack-Phase (Aufblenden)
+    # Wir berechnen die Dauer: Bei Speed 1.0 dauert es 0.1s, bei Speed 10.0 nur 0.01s.
+    attack_duration = 0.1 / max(0.1, speed)
     
-    # 2. Decay Phase (Ab 0.05 Sekunden) -> Langsam ausglühen
-    decay_time = t - attack_time
+    if t < attack_duration:
+        # Lineares Aufblenden von 0.0 auf 1.0
+        return t / attack_duration
     
-    # Formel: e^(-t * speed)
-    # Je kleiner 'speed', desto länger glüht es nach.
-    val = math.exp(-decay_time * speed)
+    # 2. Decay-Phase (Ausblenden/Nachleuchten)
+    decay_time = t - attack_duration
     
-    # Nichts Negatives zurückgeben
+    # Die Formel für das Ausglühen. 'width' steuert hier die Steilheit der Kurve.
+    # val = e^(-zeit * steilheit)
+    val = math.exp(-decay_time * width)
+    
     return max(0.0, val)
 
+
+def gen_vertical_wave(fixture, t, speed=1.0, width=5.0):
+    """Welle von OBEN nach UNTEN. Sehr cool für die Säulen der Traverse."""
+    norm_y = normalize(fixture.y, STAGE_HEIGHT)
+    phase = norm_y * width
+    return (math.sin(t * speed - phase) + 1) / 2
+
+def gen_hard_chase(fixture, t, speed=1.0, width=5.0):
+    """Wie linear_wave, aber ohne weiches Faden (Rechteck-Welle). Macht harte Ein/Aus Steps."""
+    norm_x = normalize(fixture.x, STAGE_WIDTH)
+    phase = norm_x * width
+    val = math.sin(t * speed - phase)
+    # Hard Cut: Wenn über 0, dann 100% an, sonst aus.
+    return 1.0 if val > 0 else 0.0
+
+def gen_scanner(fixture, t, speed=1.0, width=3.0):
+    """Knight Rider / Cylon Scan. Ein Balken pendelt von links nach rechts und zurück."""
+    # Oszillator der zwischen 0.0 und 1.0 pendelt
+    scanner_pos = (math.sin(t * speed) + 1) / 2
+    norm_x = normalize(fixture.x, STAGE_WIDTH)
+    
+    # Abstand der Lampe zum Scanner berechnen
+    dist = abs(norm_x - scanner_pos)
+    # Je kleiner width, desto breiter der Balken. Je größer width, desto schmaler.
+    val = max(0.0, 1.0 - (dist * width))
+    return val
+
+def gen_breathing(fixture, t, speed=1.0, width=0.0):
+    """Globaler Breathing Effekt. Alle Lampen faden exakt gleichzeitig weich ein und aus."""
+    # Keine x/y Verschiebung (Phase), dadurch sind alle absolut synchron.
+    return (math.sin(t * speed) + 1) / 2
+
+def gen_heartbeat(fixture, t, speed=1.0, width=0.0):
+    """Doppel-Pulsieren wie ein Herzschlag. Alle Lampen gleichzeitig."""
+    # Taktzyklus auf 0.0 bis 1.0 normieren
+    cycle = (t * speed) % 1.0
+    
+    # Erster kurzer Schlag
+    if cycle < 0.15: 
+        return math.sin(cycle * math.pi / 0.15)
+    # Zweiter kurzer Schlag
+    elif 0.3 < cycle < 0.45: 
+        return math.sin((cycle - 0.3) * math.pi / 0.15)
+    
+    return 0.0
+
+def gen_plasma(fixture, t, speed=1.0, width=5.0):
+    """Organisches 2D-Fließen (ähnlich wie eine Lavalampe oder Wasser)."""
+    nx = normalize(fixture.x, STAGE_WIDTH)
+    ny = normalize(fixture.y, STAGE_HEIGHT)
+    
+    # Überlagerung von 3 verschiedenen Sinus-Wellen
+    v1 = math.sin(nx * width + t * speed)
+    v2 = math.sin(ny * width + t * speed * 1.3)
+    v3 = math.sin((nx + ny) * width - t * speed * 0.8)
+    
+    # Durchschnitt bilden und auf 0-1 mappen
+    return (v1 + v2 + v3 + 3) / 6
+
+def gen_global_strobe(fixture, t, speed=10.0, width=0.5):
+    """Hartes, synchrones Strobo. 'width' bestimmt wie lange das Licht im Takt AN ist (Duty Cycle)."""
+    # Speed sollte hier hoch sein (z.B. 10.0 oder 20.0)
+    cycle = (t * speed) % 1.0
+    # Wenn width z.B. 0.5 ist, ist die Lampe 50% der Zeit an und 50% aus.
+    return 1.0 if cycle < width else 0.0
+
+def gen_flicker(fixture, t, speed=1.0, width=0.0):
+    """Simuliert TV-Flimmern oder Feuer. Echtes, hochfrequentes Rauschen."""
+    # Seed generieren, der sich ganz schnell ändert, aber für jede Lampe anders ist
+    seed = fixture.x * 12.3 + fixture.y * 45.6 + int(t * speed * 15)
+    random.seed(seed)
+    # Gibt einen harten, zufälligen Wert zwischen 0.3 und 1.0 zurück
+    return random.uniform(0.3, 1.0) if random.random() > 0.5 else 0.0
 
 # --- MAPPING ---
 # Diese Namen benutzt du in der JSON (events_default.json) unter "generator"
@@ -155,5 +228,14 @@ GENERATOR_MAP = {
     "gate_pulse": gen_gate_pulse,    # Oben-Mitte -> Überall hin
     "radar": gen_radar,              # Drehend
     "sparkle": gen_random_sparkle,    # Funkeln
-    "flash_decay": gen_flash_decay   # Blinder Hit
+    "flash_decay": gen_flash_decay,   # Blinder Hit
+
+    "vertical_wave": gen_vertical_wave, # Oben -> Unten
+    "hard_chase": gen_hard_chase,       # Linear, aber hartes Ein/Aus
+    "scanner": gen_scanner,             # Pendeln wie Knight Rider
+    "breathing": gen_breathing,         # Alle Lampen gleichzeitig weich ein/aus
+    "heartbeat": gen_heartbeat,         # Alle Lampen gleichzeitig Doppel-Pulsieren
+    "plasma": gen_plasma,               # Organisches 2D-Fließen
+    "strobe": gen_global_strobe,        # Hartes, synchrones Strobo
+    "flicker": gen_flicker,             # Echtes, hochfrequentes Rauschen
 }

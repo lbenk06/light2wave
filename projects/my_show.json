@@ -34,13 +34,47 @@
             "address": 1,
             "values": {
                 "dimmer": 1.0,
-                "red": 1.0,
-                "green": 0.0,
-                "blue": 1.0,
+                "red": 0.0,
+                "green": 1.0,
+                "blue": 0.0,
                 "strobe": 0.0
             },
-            "traverse": "Front-Traverse",
-            "snap_point_index": 7
+            "traverse": null,
+            "snap_point_index": null
+        },
+        {
+            "id": "fluter1",
+            "profile": "led_fluter_8ch",
+            "x": 450.0,
+            "y": 240.0,
+            "address": 8,
+            "values": {
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "white": 0.0,
+                "strobe": 0.0,
+                "dimmer": 0.0
+            },
+            "traverse": null,
+            "snap_point_index": null
+        },
+        {
+            "id": "fluter2",
+            "profile": "led_fluter_8ch",
+            "x": 650.0,
+            "y": 240.0,
+            "address": 16,
+            "values": {
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "white": 0.0,
+                "strobe": 0.0,
+                "dimmer": 0.0
+            },
+            "traverse": null,
+            "snap_point_index": null
         }
     ],
     "banks": [
@@ -116,6 +150,74 @@
                             "green": 0.0,
                             "blue": 1.0,
                             "strobe": 0.0
+                        }
+                    }
+                },
+                {
+                    "name": "dunkelblau",
+                    "data": {
+                        "par1": {
+                            "dimmer": 1.0,
+                            "red": 0.0,
+                            "green": 0.20392156862745098,
+                            "blue": 1.0,
+                            "strobe": 0.0
+                        }
+                    }
+                },
+                {
+                    "name": "alle rot",
+                    "data": {
+                        "par1": {
+                            "dimmer": 1.0,
+                            "red": 1.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "fluter1": {
+                            "red": 1.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "strobe": 0.0,
+                            "dimmer": 1.0
+                        },
+                        "fluter2": {
+                            "red": 1.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "strobe": 0.0,
+                            "dimmer": 1.0
+                        }
+                    }
+                },
+                {
+                    "name": "par gr\u00fcn",
+                    "data": {
+                        "par1": {
+                            "dimmer": 1.0,
+                            "red": 0.0,
+                            "green": 1.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "fluter1": {
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "strobe": 0.0,
+                            "dimmer": 0.0
+                        },
+                        "fluter2": {
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "strobe": 0.0,
+                            "dimmer": 0.0
                         }
                     }
                 }

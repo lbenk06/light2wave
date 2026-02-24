@@ -87,8 +87,31 @@ class Event:
         
         #dynamisch
         elif self.type == "dynamic" or self.type=="flash":
+            
             params = self.data.get("params", {})
             gen_name = params.get("generator")
+
+            #falls das event mit festen farben definiert ist, diese verwenden
+            roles=self.data.get("roles", {})
+            color_keys=["red", "green", "blue", "white"]
+
+            #versucht das event eigene farben zu setzen?
+            event_has_color=any(c in roles for c in color_keys)
+
+            for fixture in engine.fixtures:
+                #alte farben auswaschen
+                #wenn das event eine farbe vorhibt, setzen wir sicherheitshalber erst alle farben auf 0
+                if event_has_color:
+                    for c in color_keys:
+                        if fixture.has(c) and c != params.get("target_role"):
+                            fixture.set(c, 0.0)
+                #neue werte aus dem event setzen            
+                for role, val in roles.items():
+                    if fixture.has(role) and role!=params.get("target_role"):
+                        fixture.set(role, val)
+            
+            
+            
             
             # Generator Funktion aus der Map holen
             func = GENERATOR_MAP.get(gen_name)
@@ -101,10 +124,20 @@ class Event:
                 # Nur Lampen holen, die diese Eigenschaft haben
                 target_fixtures = [f for f in engine.fixtures if f.has(target_role)]
 
+                max_val=0.0
+
                 for fixture in target_fixtures:
                     # Hier übergeben wir das fixture-Objekt für x/y Koordinaten
                     val = func(fixture, t, speed=speed, width=width)
                     fixture.set(target_role, val)
+
+                    if val>max_val:
+                        max_val=val
+
+                #auto stopp wenn der flash effekt durch ist (kein weiß clash mehr-->engine wieder frei für andere events)
+                attack_duration = 0.1 / max(0.1, speed)
+                if self.type=="flash" and t > attack_duration and max_val<0.01:
+                    self.stop(engine)
 
 
 def load_events_from_json(filename: str):

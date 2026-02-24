@@ -1,6 +1,6 @@
 from nicegui import ui
 from gui.state import state
-from gui.tabs import live, audio, fixtures, traverse, scenes, dmx
+from gui.tabs import live, audio, fixtures, traverse, scenes, dmx, event
 
 
 def create_app():
@@ -14,6 +14,7 @@ def create_app():
         tab_audio = ui.tab('Audio In')
         tab_fixtures = ui.tab('Geräte')
         tab_traverse = ui.tab('Traverse')
+        tab_event=ui.tab('Events')
         tab_scenes = ui.tab('Szenen')
         tab_dmx = ui.tab('DMX')
 
@@ -33,6 +34,9 @@ def create_app():
 
         with ui.tab_panel(tab_scenes):
             scenes.create()
+
+        with ui.tab_panel(tab_event):
+            event.create()
 
         with ui.tab_panel(tab_dmx):
             dmx.create()
