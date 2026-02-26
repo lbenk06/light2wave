@@ -32,11 +32,11 @@ def create_app():
         with ui.tab_panel(tab_traverse):
             traverse.create()
 
-        with ui.tab_panel(tab_scenes):
-            scenes.create()
-
         with ui.tab_panel(tab_event):
             event.create()
+
+        with ui.tab_panel(tab_scenes):
+            scenes.create()
 
         with ui.tab_panel(tab_dmx):
             dmx.create()

@@ -14,7 +14,22 @@ class AppState:
 
     def load_project(self, path):
         self.project = load_project(path)
+
+        # Traversen neu erstellen und Snap-Punkte generieren
+        self.engine.traverses.clear()
+        for td in self.project.get("traverses", []):
+            from engine.traverse_snap import Traverse
+            t = Traverse(
+                x1=td["x1"],
+                y1=td["y1"],
+                x2=td["x2"],
+                y2=td["y2"],
+                snap_distance=td.get("snap_distance", 40),
+                name=td["name"]
+            )
+            self.engine.traverses.append(t)
         
+        # Fixtures und Banks laden
         if self.project:
             load_fixtures_from_json(self.project.get("fixtures", []), self.engine)
             load_banks_from_json(self.project.get("banks", []), self.engine)
