@@ -34,7 +34,7 @@ def create():
             with ui.column().classes('w-5/12 gap-4'):
                 ui.input(label='Event Name').bind_value(form_data, 'name').props('dark color=cyan').classes('w-full')
                 
-                ui.select(
+                typ_select = ui.select(
                     options=['dynamic', 'static', 'flash', 'stop_all'],
                     label='Event Typ'
                 ).bind_value(form_data, 'type').props('dark color=cyan').classes('w-full')
@@ -58,17 +58,57 @@ def create():
                 ui.label('Effekt Parameter').classes('text-sm font-bold text-gray-400')
                 
                 # Generator-Wahl
-                ui.select(options=list(GENERATOR_MAP.keys()), label='Muster').bind_value(form_data, 'generator').props('dark color=purple')
+                gen_select = ui.select(options=list(GENERATOR_MAP.keys()), label='Muster').bind_value(form_data, 'generator').props('dark color=purple')
                 
                 # Dynamische Labels je nach Typ
                 with ui.column().classes('w-full'):
                     # Wenn Dynamic: Geschwindigkeit,  Wenn Flash: Aufblend-Zeit (Attack)
-                    ui.label().bind_text_from(form_data, 'type', backward=lambda t: 'Aufblend-Tempo (Attack)' if t == 'flash' else 'Geschwindigkeit (Speed)').classes('text-xs text-gray-500')
-                    ui.slider(min=0.1, max=15.0, step=0.1).bind_value(form_data, 'speed').props('dark color=purple label-always')
+                    lbl_speed = ui.label('Geschwindigkeit (Speed)').classes('text-xs text-gray-500')
+                    sld_speed = ui.slider(min=0.1, max=15.0, step=0.1).bind_value(form_data, 'speed').props('dark color=purple label-always')
 
                     # Wenn Dynamic: Breite/Phase, Wenn Flash: Nachleucht-Dauer (Decay)
-                    ui.label().bind_text_from(form_data, 'type', backward=lambda t: 'Nachleucht-Dauer (Decay)' if t == 'flash' else 'Breite / Phase (Width)').classes('text-xs text-gray-500')
-                    ui.slider(min=0.1, max=15.0, step=0.1).bind_value(form_data, 'width').props('dark color=purple label-always')
+                    lbl_width = ui.label('Breite / Phase (Width)').classes('text-xs text-gray-500')
+                    sld_width = ui.slider(min=0.1, max=15.0, step=0.1).bind_value(form_data, 'width').props('dark color=purple label-always')
+
+                def update_ui(e=None):
+                    t = form_data.get('type')
+                    g = form_data.get('generator')
+                    
+                    if g == 'strobe':
+                        lbl_speed.set_text('⚡ Strobo Speed (Blitze / Sekunde)')
+                        lbl_speed.classes('text-yellow-400 font-bold', remove='text-gray-500')
+                        sld_speed.props('color=yellow', remove='color=purple')
+                        
+                        # DEINE IDEE: Einfach ein fetter Warnhinweis!
+                        lbl_width.set_text('⚡ Blitz-Dauer (Tastgrad! WICHTIG: NICHT ÜBER 1.0 ZIEHEN!)')
+                        lbl_width.classes('text-red-400 font-black', remove='text-gray-500 text-yellow-400')
+                        sld_width.props('color=yellow', remove='color=purple')
+                        
+                        # Ein kleiner Fangzaun: Falls man ihn doch drüber zieht, schnappt er auf 0.2 zurück
+                        if form_data['width'] > 1.0: 
+                            form_data['width'] = 0.2
+                        
+                    elif t == 'flash':
+                        lbl_speed.set_text('Aufblend-Tempo (Attack)')
+                        lbl_speed.classes('text-gray-500', remove='text-yellow-400 font-bold text-red-400 font-black')
+                        sld_speed.props('color=purple', remove='color=yellow')
+                        
+                        lbl_width.set_text('Nachleucht-Dauer (Decay)')
+                        lbl_width.classes('text-gray-500', remove='text-yellow-400 font-bold text-red-400 font-black')
+                        sld_width.props('color=purple', remove='color=yellow')
+                        
+                    else:
+                        lbl_speed.set_text('Geschwindigkeit (Speed)')
+                        lbl_speed.classes('text-gray-500', remove='text-yellow-400 font-bold text-red-400 font-black')
+                        sld_speed.props('color=purple', remove='color=yellow')
+                        
+                        lbl_width.set_text('Breite / Phase (Width)')
+                        lbl_width.classes('text-gray-500', remove='text-yellow-400 font-bold text-red-400 font-black')
+                        sld_width.props('color=purple', remove='color=yellow')
+
+                typ_select.on_value_change(update_ui)
+                gen_select.on_value_change(update_ui)
+                update_ui()
                         
 
         
@@ -178,6 +218,8 @@ def create():
             form_data["target_role"] = params.get("target_role", "dimmer")
             form_data["speed"] = params.get("speed", 1.0)
             form_data["width"] = params.get("width", 5.0)
+
+        update_ui()
 
         ui.notify(f'"{ev_obj.name}" in den Editor geladen', color='info')
         ui.run_javascript('window.scrollTo(0, 0)') # Scrollt nach oben zum Editor
