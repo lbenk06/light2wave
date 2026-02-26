@@ -60,7 +60,7 @@ def create():
 
     def update_monitor():
         # Holt sich die Daten direkt aus der Engine zur Anzeige
-        data = state.engine.render() # Oder state.engine.universe.channels
+        data = state.engine.render() 
         for i in range(32):
             if i < len(data):
                 val = int(data[i])

@@ -1,13 +1,12 @@
-# audio/audio_file.py
 import numpy as np
 import librosa
 import threading
 import pygame
 
-# Pygame Mixer initialisieren
+# pygame mixer initialisieren
 pygame.mixer.init()
 
-# Globaler State für unser File-Audio-Modul
+# globaler state für preanalyse file
 audio_state = {
     "file_path": None,
     "beat_times": [],
@@ -85,7 +84,7 @@ def toggle_playback():
         audio_state["is_playing"] = False
 
 def get_current_time():
-    """Gibt die aktuelle Song-Position in Sekunden zurück"""
+    """Gibt die aktuelle Song Position in Sekunden zurück"""
     if not audio_state["is_playing"] or not pygame.mixer.music.get_busy():
         return 0.0
     return pygame.mixer.music.get_pos() / 1000.0

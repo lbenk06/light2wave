@@ -76,16 +76,6 @@
         }
     },
     {
-        "name": "Strobo Hart",
-        "type": "dynamic",
-        "params": {
-            "generator": "strobe",
-            "target_role": "dimmer",
-            "speed": 12.0,
-            "width": 0.3
-        }
-    },
-    {
         "name": "Heartbeat",
         "type": "dynamic",
         "params": {
@@ -158,7 +148,6 @@
         "type": "dynamic",
         "roles": {
             "red": 1.0,
-            "green": 0.4,
             "dimmer": 1.0
         },
         "params": {
@@ -223,6 +212,20 @@
             "target_role": "dimmer",
             "speed": 8.0,
             "width": 8.0
+        }
+    },
+    {
+        "name": "strobo hart",
+        "type": "dynamic",
+        "roles": {
+            "red": 1.0,
+            "dimmer": 1.0
+        },
+        "params": {
+            "generator": "strobe",
+            "target_role": "dimmer",
+            "speed": 8.0,
+            "width": 0.2
         }
     }
 ]

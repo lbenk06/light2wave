@@ -72,15 +72,15 @@ def create():
             ui.notify("Szenen-Namen eingeben!", color="orange")
             return
 
-        # SNAPSHOT LOGIK
+        # snapshot logik: szene= snapshot von allen 512 kanälen
         scene_data = {}
         for fixture in state.engine.fixtures:
-            # WICHTIG: .copy(), damit wir die Werte einfrieren!
             scene_data[fixture.id] = fixture.values.copy()
 
         new_scene = {
             "name": inp_scene_name.value,
-            "data": scene_data
+            "data": scene_data,
+            "color": inp_scene_color.value  # NEU: Eigene Farbe mit in die JSON speichern
         }
 
         state.engine.banks[current_bank_index]["scenes"].append(new_scene)
@@ -143,8 +143,12 @@ def create():
             # SPALTE B: Szenen Speichern
             with ui.column().classes('gap-2'):
                 ui.label('2. Look speichern').classes('font-bold text-white')
-                with ui.row():
+                with ui.row().classes('items-center'):
                     inp_scene_name = ui.input('Name').props('dense dark placeholder="Szenen Name"')
+                    
+                    # NEU: Farbwähler für den Button
+                    inp_scene_color = ui.color_input(label='Farbe', value='#333333').props('dense dark').classes('w-24')
+                    
                     ui.button('SPEICHERN', on_click=save_scene).props('dense color=blue icon=save')
 
         # Die Bank-Tabs
@@ -189,19 +193,25 @@ def create():
             #Für jede Szene eine Karte zeichnen
             for scene in bank["scenes"]:
                 
-                #Karte erscheint in der Farbe der ersten Lampe der Szene (wenn vorhanden) als Vorschau, sonst grau
-                preview_color = "#333"
-                if scene["data"]:
-                    vals = list(scene["data"].values())[0]
-                    r, g, b = 0, 0, 0
-                    if isinstance(vals, dict):
-                        dim = vals.get("dimmer", 1.0)
-                        r = int(vals.get("red", 0) * dim * 255)
-                        g = int(vals.get("green", 0) * dim * 255)
-                        b = int(vals.get("blue", 0) * dim * 255)
-                    elif isinstance(vals, (list, tuple)):
-                        r, g, b = vals[0], vals[1], vals[2]
-                    preview_color = f"rgb({r}, {g}, {b})"
+                
+                # Erst prüfen, ob eine Custom-Farbe in der JSON gespeichert wurde
+                custom_color = scene.get("color")
+                if custom_color and custom_color != "#333333":
+                    preview_color = custom_color
+                else:
+                    # Alter Fallback-> Farbe aus der ersten Lampe berechnen
+                    preview_color = "#333"
+                    if scene.get("data"):
+                        vals = list(scene["data"].values())[0]
+                        r, g, b = 0, 0, 0
+                        if isinstance(vals, dict):
+                            dim = vals.get("dimmer", 1.0)
+                            r = int(vals.get("red", 0) * dim * 255)
+                            g = int(vals.get("green", 0) * dim * 255)
+                            b = int(vals.get("blue", 0) * dim * 255)
+                        elif isinstance(vals, (list, tuple)):
+                            r, g, b = vals[0], vals[1], vals[2]
+                        preview_color = f"rgb({r}, {g}, {b})"
 
                 #Szenenkarte mit Klickfunktionen
                 with ui.card().classes('w-40 h-32 relative cursor-pointer hover:scale-105 transition-transform border border-gray-600 p-0 overflow-hidden'):

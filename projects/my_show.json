@@ -35,8 +35,8 @@
             "values": {
                 "dimmer": 1.0,
                 "red": 0.0,
-                "green": 1.0,
-                "blue": 0.0,
+                "green": 0.0,
+                "blue": 1.0,
                 "strobe": 0.0
             },
             "traverse": null,
@@ -51,10 +51,10 @@
             "values": {
                 "red": 0.0,
                 "green": 0.0,
-                "blue": 0.0,
+                "blue": 1.0,
                 "white": 0.0,
                 "strobe": 0.0,
-                "dimmer": 0.0
+                "dimmer": 1.0
             },
             "traverse": null,
             "snap_point_index": null
@@ -68,10 +68,10 @@
             "values": {
                 "red": 0.0,
                 "green": 0.0,
-                "blue": 0.0,
+                "blue": 1.0,
                 "white": 0.0,
                 "strobe": 0.0,
-                "dimmer": 0.0
+                "dimmer": 1.0
             },
             "traverse": null,
             "snap_point_index": null
@@ -220,6 +220,64 @@
                             "dimmer": 0.0
                         }
                     }
+                },
+                {
+                    "name": "alle gr\u00fcn",
+                    "data": {
+                        "par1": {
+                            "dimmer": 1.0,
+                            "red": 0.0,
+                            "green": 1.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "fluter1": {
+                            "red": 0.0,
+                            "green": 1.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "strobe": 0.0,
+                            "dimmer": 1.0
+                        },
+                        "fluter2": {
+                            "red": 0.0,
+                            "green": 1.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "strobe": 0.0,
+                            "dimmer": 1.0
+                        }
+                    },
+                    "color": "#00f715"
+                },
+                {
+                    "name": "alle blau",
+                    "data": {
+                        "par1": {
+                            "dimmer": 1.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 1.0,
+                            "strobe": 0.0
+                        },
+                        "fluter1": {
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 1.0,
+                            "white": 0.0,
+                            "strobe": 0.0,
+                            "dimmer": 1.0
+                        },
+                        "fluter2": {
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 1.0,
+                            "white": 0.0,
+                            "strobe": 0.0,
+                            "dimmer": 1.0
+                        }
+                    },
+                    "color": "#002bff"
                 }
             ]
         }
