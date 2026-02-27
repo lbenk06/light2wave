@@ -8,7 +8,7 @@ def draw_fixtures(parent_layer, fixtures, elements_dict, on_mouse_down=None, sca
     """
 
     parent_layer.clear()
-    #container_refs["elements"].clear()
+
     elements_dict.clear()
 
     with parent_layer:
@@ -25,7 +25,7 @@ def draw_fixtures(parent_layer, fixtures, elements_dict, on_mouse_down=None, sca
 
                 ui.tooltip(f"{fixture.id} (Addr: {fixture.address})")
 
-                if scale > 0.8:  # Nur Label anzeigen, wenn genug Platz ist
+                if scale > 0.8:  # Nur Label anzeigen wenn genug Platz ist
                     ui.label(f'{fixture.id}--{fixture.address}').style('''
                         position: absolute;
                         top: 26px;

@@ -2,11 +2,8 @@ from nicegui import ui
 from gui.state import state
 from projects.projects_io import save_project, load_project, load_fixtures_from_json
 from engine.traverse_snap import Traverse 
-from nicegui import run
-from fixtures.fixture import Fixture
 from gui.renderer.traverse_renderer import draw_traverses
 from gui.renderer.fixture_renderer import draw_fixtures
-import numpy as np
 import os
 
 def create():

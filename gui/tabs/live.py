@@ -2,7 +2,6 @@ from nicegui import ui
 from gui.state import state
 from gui.renderer.traverse_renderer import draw_traverses
 from gui.renderer.fixture_renderer import draw_fixtures
-import math
 
 def create():
     # Container für Referenzen (damit der Timer Zugriff auf die Elemente hat)
@@ -62,6 +61,10 @@ def create():
 
         update_button_styles()
 
+    def on_refresh():
+        ui.notify('Live Tab neu geladen', color='green')
+        refresh_ui()
+
     # HAUPTCONTAINER FÜR DEN REFRESH
     main_container = ui.column().classes('w-full h-full p-4 gap-4')
 
@@ -80,7 +83,7 @@ def create():
                     ui.label('LIVE DASHBOARD').classes('text-2xl font-bold tracking-wider text-gray-200')
                     
                     # Refresh Button
-                    ui.button(on_click=lambda: (refresh_ui(), ui.notify('Live Tab neu geladen', color='green')), icon='refresh') \
+                    ui.button(on_click=on_refresh, icon='refresh') \
                         .props('flat round color=grey') \
                         .tooltip('Kompletten Tab neu laden')
 

@@ -34,9 +34,7 @@ def save_custom_profile_to_disk(new_profile_data):
 
 
 def create():
-    # ==========================================
     # OBERER BEREICH: LIVE STEUERUNG
-    # ==========================================
     
     # Header Zeile: Titel links, Refresh-Button rechts
     with ui.row().classes('w-full items-center justify-between mb-4'):
@@ -107,9 +105,7 @@ def create():
 
     ui.separator().classes('my-8')
 
-    # ==========================================
     # UNTERER BEREICH: PROFIL EDITOR
-    # ==========================================
     
     # Lokaler State für den Editor
     editor_state = {

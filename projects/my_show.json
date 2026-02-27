@@ -27,65 +27,9 @@
     ],
     "fixtures": [
         {
-            "id": "par1",
-            "profile": "led_par_6ch",
-            "x": 550.0,
-            "y": 240.0,
-            "address": 1,
-            "values": {
-                "dimmer": 1.0,
-<<<<<<< HEAD
-                "red": 1.0,
-                "green": 0.0,
-                "blue": 0.0,
-=======
-                "red": 0.0,
-                "green": 0.0,
-                "blue": 1.0,
->>>>>>> 4a409a0e84ce4af545df2c22ed60f07d6dc6c6cb
-                "strobe": 0.0
-            },
-            "traverse": null,
-            "snap_point_index": null
-        },
-        {
-            "id": "fluter1",
-            "profile": "led_fluter_8ch",
+            "id": "strobo_1",
+            "profile": "strobo",
             "x": 450.0,
-            "y": 240.0,
-            "address": 8,
-            "values": {
-                "red": 1.0,
-                "green": 0.0,
-                "blue": 1.0,
-                "white": 0.0,
-                "strobe": 0.0,
-                "dimmer": 1.0
-            },
-            "traverse": null,
-            "snap_point_index": null
-        },
-        {
-            "id": "fluter2",
-            "profile": "led_fluter_8ch",
-            "x": 650.0,
-            "y": 240.0,
-            "address": 16,
-            "values": {
-                "red": 1.0,
-                "green": 0.0,
-                "blue": 1.0,
-                "white": 0.0,
-                "strobe": 0.0,
-                "dimmer": 1.0
-            },
-            "traverse": null,
-            "snap_point_index": null
-        },
-        {
-            "id": "led_par_6ch_4",
-            "profile": "led_par_6ch",
-            "x": 750.0,
             "y": 240.0,
             "address": 1,
             "values": {
@@ -93,17 +37,125 @@
                 "red": 0.0,
                 "green": 0.0,
                 "blue": 0.0,
+                "white": 0.0,
+                "strobe": 0.0
+            },
+            "traverse": "Front-Traverse",
+            "snap_point_index": 5
+        },
+        {
+            "id": "strobo_2",
+            "profile": "strobo",
+            "x": 750.0,
+            "y": 240.0,
+            "address": 7,
+            "values": {
+                "dimmer": 0.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "white": 0.0,
                 "strobe": 0.0
             },
             "traverse": "Front-Traverse",
             "snap_point_index": 11
         },
         {
-            "id": "Moving Head",
-            "profile": "moving_head_9ch",
-            "x": 900.0,
+            "id": "blinder_3",
+            "profile": "blinder",
+            "x": 450.0,
+            "y": 160.0,
+            "address": 13,
+            "values": {
+                "dimmer": 0.0,
+                "white": 0.0
+            },
+            "traverse": "Front-Traverse",
+            "snap_point_index": 22
+        },
+        {
+            "id": "blinder_4",
+            "profile": "blinder",
+            "x": 750.0,
+            "y": 160.0,
+            "address": 15,
+            "values": {
+                "dimmer": 0.0,
+                "white": 0.0
+            },
+            "traverse": "Front-Traverse",
+            "snap_point_index": 28
+        },
+        {
+            "id": "LED PAR",
+            "profile": "led_par_6ch",
+            "x": 250.0,
             "y": 240.0,
-            "address": 28,
+            "address": 17,
+            "values": {
+                "dimmer": 0.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "strobe": 0.0
+            },
+            "traverse": "Front-Traverse",
+            "snap_point_index": 1
+        },
+        {
+            "id": "LED PAR",
+            "profile": "led_par_6ch",
+            "x": 350.0,
+            "y": 240.0,
+            "address": 23,
+            "values": {
+                "dimmer": 0.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "strobe": 0.0
+            },
+            "traverse": "Front-Traverse",
+            "snap_point_index": 3
+        },
+        {
+            "id": "LED PAR",
+            "profile": "led_par_6ch",
+            "x": 850.0,
+            "y": 240.0,
+            "address": 29,
+            "values": {
+                "dimmer": 0.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "strobe": 0.0
+            },
+            "traverse": "Front-Traverse",
+            "snap_point_index": 13
+        },
+        {
+            "id": "LED PAR",
+            "profile": "led_par_6ch",
+            "x": 950.0,
+            "y": 240.0,
+            "address": 35,
+            "values": {
+                "dimmer": 0.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "strobe": 0.0
+            },
+            "traverse": "Front-Traverse",
+            "snap_point_index": 15
+        },
+        {
+            "id": "MovingHead1",
+            "profile": "moving_head_9ch",
+            "x": 215.0,
+            "y": 325.0,
+            "address": 41,
             "values": {
                 "dimmer": 0.0,
                 "red": 0.0,
@@ -115,15 +167,35 @@
                 "strobe": 0.0,
                 "speed": 0.0
             },
-            "traverse": "Front-Traverse",
+            "traverse": "Front-Left-Traverse",
+            "snap_point_index": 12
+        },
+        {
+            "id": "MovingHead1",
+            "profile": "moving_head_9ch",
+            "x": 215.0,
+            "y": 425.0,
+            "address": 50,
+            "values": {
+                "dimmer": 0.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "white": 0.0,
+                "pan": 0.0,
+                "tilt": 0.0,
+                "strobe": 0.0,
+                "speed": 0.0
+            },
+            "traverse": "Front-Left-Traverse",
             "snap_point_index": 14
         },
         {
-            "id": "Moving Head",
+            "id": "MovingHead1",
             "profile": "moving_head_9ch",
-            "x": 300.0,
-            "y": 240.0,
-            "address": 28,
+            "x": 985.0,
+            "y": 325.0,
+            "address": 59,
             "values": {
                 "dimmer": 0.0,
                 "red": 0.0,
@@ -135,213 +207,29 @@
                 "strobe": 0.0,
                 "speed": 0.0
             },
-            "traverse": "Front-Traverse",
-            "snap_point_index": 2
+            "traverse": "Front-Right-Traverse",
+            "snap_point_index": 3
+        },
+        {
+            "id": "MovingHead1",
+            "profile": "moving_head_9ch",
+            "x": 985.0,
+            "y": 425.0,
+            "address": 68,
+            "values": {
+                "dimmer": 0.0,
+                "red": 0.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "white": 0.0,
+                "pan": 0.0,
+                "tilt": 0.0,
+                "strobe": 0.0,
+                "speed": 0.0
+            },
+            "traverse": "Front-Right-Traverse",
+            "snap_point_index": 5
         }
     ],
-    "banks": [
-        {
-            "name": "disco",
-            "scenes": [
-                {
-                    "name": "weiss",
-                    "data": {
-                        "par1": {
-                            "dimmer": 1.0,
-                            "red": 1.0,
-                            "green": 1.0,
-                            "blue": 1.0,
-                            "strobe": 0.0
-                        }
-                    }
-                },
-                {
-                    "name": "gelb",
-                    "data": {
-                        "par1": {
-                            "dimmer": 1.0,
-                            "red": 1.0,
-                            "green": 1.0,
-                            "blue": 0.0,
-                            "strobe": 0.0
-                        }
-                    }
-                },
-                {
-                    "name": "rot",
-                    "data": {
-                        "par1": {
-                            "dimmer": 1.0,
-                            "red": 1.0,
-                            "green": 0.0,
-                            "blue": 0.0,
-                            "strobe": 0.0
-                        }
-                    }
-                },
-                {
-                    "name": "gr\u00fcn",
-                    "data": {
-                        "par1": {
-                            "dimmer": 1.0,
-                            "red": 0.0,
-                            "green": 1.0,
-                            "blue": 0.0,
-                            "strobe": 0.0
-                        }
-                    }
-                },
-                {
-                    "name": "blau",
-                    "data": {
-                        "par1": {
-                            "dimmer": 1.0,
-                            "red": 0.0,
-                            "green": 0.0,
-                            "blue": 1.0,
-                            "strobe": 0.0
-                        }
-                    }
-                },
-                {
-                    "name": "lila",
-                    "data": {
-                        "par1": {
-                            "dimmer": 1.0,
-                            "red": 1.0,
-                            "green": 0.0,
-                            "blue": 1.0,
-                            "strobe": 0.0
-                        }
-                    }
-                },
-                {
-                    "name": "dunkelblau",
-                    "data": {
-                        "par1": {
-                            "dimmer": 1.0,
-                            "red": 0.0,
-                            "green": 0.20392156862745098,
-                            "blue": 1.0,
-                            "strobe": 0.0
-                        }
-                    }
-                },
-                {
-                    "name": "alle rot",
-                    "data": {
-                        "par1": {
-                            "dimmer": 1.0,
-                            "red": 1.0,
-                            "green": 0.0,
-                            "blue": 0.0,
-                            "strobe": 0.0
-                        },
-                        "fluter1": {
-                            "red": 1.0,
-                            "green": 0.0,
-                            "blue": 0.0,
-                            "white": 0.0,
-                            "strobe": 0.0,
-                            "dimmer": 1.0
-                        },
-                        "fluter2": {
-                            "red": 1.0,
-                            "green": 0.0,
-                            "blue": 0.0,
-                            "white": 0.0,
-                            "strobe": 0.0,
-                            "dimmer": 1.0
-                        }
-                    }
-                },
-                {
-                    "name": "par gr\u00fcn",
-                    "data": {
-                        "par1": {
-                            "dimmer": 1.0,
-                            "red": 0.0,
-                            "green": 1.0,
-                            "blue": 0.0,
-                            "strobe": 0.0
-                        },
-                        "fluter1": {
-                            "red": 0.0,
-                            "green": 0.0,
-                            "blue": 0.0,
-                            "white": 0.0,
-                            "strobe": 0.0,
-                            "dimmer": 0.0
-                        },
-                        "fluter2": {
-                            "red": 0.0,
-                            "green": 0.0,
-                            "blue": 0.0,
-                            "white": 0.0,
-                            "strobe": 0.0,
-                            "dimmer": 0.0
-                        }
-                    }
-                },
-                {
-                    "name": "alle gr\u00fcn",
-                    "data": {
-                        "par1": {
-                            "dimmer": 1.0,
-                            "red": 0.0,
-                            "green": 1.0,
-                            "blue": 0.0,
-                            "strobe": 0.0
-                        },
-                        "fluter1": {
-                            "red": 0.0,
-                            "green": 1.0,
-                            "blue": 0.0,
-                            "white": 0.0,
-                            "strobe": 0.0,
-                            "dimmer": 1.0
-                        },
-                        "fluter2": {
-                            "red": 0.0,
-                            "green": 1.0,
-                            "blue": 0.0,
-                            "white": 0.0,
-                            "strobe": 0.0,
-                            "dimmer": 1.0
-                        }
-                    },
-                    "color": "#00f715"
-                },
-                {
-                    "name": "alle blau",
-                    "data": {
-                        "par1": {
-                            "dimmer": 1.0,
-                            "red": 0.0,
-                            "green": 0.0,
-                            "blue": 1.0,
-                            "strobe": 0.0
-                        },
-                        "fluter1": {
-                            "red": 0.0,
-                            "green": 0.0,
-                            "blue": 1.0,
-                            "white": 0.0,
-                            "strobe": 0.0,
-                            "dimmer": 1.0
-                        },
-                        "fluter2": {
-                            "red": 0.0,
-                            "green": 0.0,
-                            "blue": 1.0,
-                            "white": 0.0,
-                            "strobe": 0.0,
-                            "dimmer": 1.0
-                        }
-                    },
-                    "color": "#002bff"
-                }
-            ]
-        }
-    ]
+    "banks": []
 }
