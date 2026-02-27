@@ -4,6 +4,8 @@ from projects.projects_io import save_project, load_project, load_fixtures_from_
 from engine.traverse_snap import Traverse 
 from nicegui import run
 from fixtures.fixture import Fixture
+from gui.renderer.traverse_renderer import draw_traverses
+from gui.renderer.fixture_renderer import draw_fixtures
 import numpy as np
 import os
 
@@ -74,58 +76,17 @@ def create():
 
 # Funktionen
 ################################################################################################
-
+    
     def redraw_fixtures():
-        """Löscht den Layer und zeichnet alle Lampen neu."""
-        layer = container_refs["layer"]
-        if layer is None: 
+        if container_refs["layer"] is None:
             return
 
-        layer.clear()  # Layer beibehalten, nur Kinder löschen
-        container_refs["elements"].clear()
-
-        with layer:
-            for fixture in state.engine.fixtures:
-                r, g, b = fixture.get_color()
-
-                with ui.element('div').style(f'''
-                    position: absolute;
-                    left: {fixture.x}px;
-                    top: {fixture.y}px;
-                    width: 24px;
-                    height: 24px;
-                    border-radius: 50%;
-                    background-color: rgb({r},{g},{b});
-                    border: 2px solid white;
-                    box-shadow: 0 0 5px rgba(0,0,0,0.5);
-                    cursor: pointer;
-                    z-index: 1100;
-                    transform: translate(-50%, -50%);
-                    pointer-events: auto;  
-                ''').on('mousedown', lambda e, f=fixture: handle_mouse_down(f)) as el:
-
-                    # Tooltip
-                    ui.tooltip(f"{fixture.id} (Addr: {fixture.address})")
-                    
-                    # Text-Label
-                    ui.label(f'{fixture.id}--{fixture.address}').style('''
-                        position: absolute;
-                        top: 26px;
-                        left: 50%;
-                        transform: translateX(-50%);
-                        font-size: 10px;
-                        color: black;
-                        pointer-events: none;
-                        text-align: center;
-                        white-space: pre;
-                        background-color: white;
-                        padding: 0px 2px;
-                        border-radius: 4px;
-                        box-shadow: 0 1px 4px rgba(0,0,0,0.3);
-                    ''')
-                
-                # Referenz speichern für Farb-Updates
-                container_refs["elements"][fixture] = el
+        draw_fixtures(
+            parent_layer=container_refs["layer"],
+            fixtures=state.engine.fixtures,
+            elements_dict=container_refs["elements"],
+            on_mouse_down=handle_mouse_down
+        )
 
     def delete_fixture(fixture, client):
         with ui.dialog() as dialog, ui.card():
@@ -471,7 +432,7 @@ def create():
         state.engine.banks = data.get("banks", [])
 
         redraw_fixtures()
-        draw_traverses()
+        draw_traverses(traverse_layer, state.engine.traverses)
         ui.notify("Geladen", color="green")
 
     def do_clear():
@@ -489,96 +450,13 @@ def create():
                 ui.button("Nein", on_click=d.close).props('flat')
         d.open()
 
-    # UI-Optik
-    def draw_traverses():
-        traverse_layer.clear()
-
-        # SVG direkt im Layer
-        content = ""
-        with traverse_layer:
-            for t in state.engine.traverses:
-
-                # Rechteck rund um die Traverse (Abstand snap_distance/2)
-                d = t.snap_distance / 2
-                dx = t.x2 - t.x1
-                dy = t.y2 - t.y1
-
-                nx, ny = -dy, dx
-                length = (nx**2 + ny**2) ** 0.5
-                nx, ny = nx / length, ny / length
-
-                dx_n, dy_n = nx * d, ny * d
-
-                Ax, Ay = t.x1 + dx_n, t.y1 + dy_n
-                Bx, By = t.x2 + dx_n, t.y2 + dy_n
-                Cx, Cy = t.x2 - dx_n, t.y2 - dy_n
-                Dx, Dy = t.x1 - dx_n, t.y1 - dy_n
-
-                # Rechtecklinien
-                content += f'''
-                <line x1="{Ax}" y1="{Ay}" x2="{Bx}" y2="{By}" stroke="{getattr(t, 'color', 'grey')}" stroke-width="6"/>
-                <line x1="{Bx}" y1="{By}" x2="{Cx}" y2="{Cy}" stroke="{getattr(t, 'color', 'grey')}" stroke-width="6"/>
-                <line x1="{Cx}" y1="{Cy}" x2="{Dx}" y2="{Dy}" stroke="{getattr(t, 'color', 'grey')}" stroke-width="6"/>
-                <line x1="{Dx}" y1="{Dy}" x2="{Ax}" y2="{Ay}" stroke="{getattr(t, 'color', 'grey')}" stroke-width="6"/>
-                '''
-
-                corner_radius = 4  # Radius des Kreises
-
-                for (x, y) in [(Ax, Ay), (Bx, By), (Cx, Cy), (Dx, Dy)]:
-                    content += f'<circle cx="{x}" cy="{y}" r="{corner_radius}" fill="gray"/>'
-
-                # Obere Kante: Ax -> Bx
-                vec_top = (Bx - Ax, By - Ay)
-
-                # Untere Kante: Dx -> Cx
-                vec_bottom = (Cx - Dx, Cy - Dy)
-
-                len_top = np.sqrt(vec_top[0]**2 + vec_top[1]**2)
-                ux_top, uy_top = vec_top[0]/len_top, vec_top[1]/len_top
-
-                len_bottom = np.sqrt(vec_bottom[0]**2 + vec_bottom[1]**2)
-                ux_bottom, uy_bottom = vec_bottom[0]/len_bottom, vec_bottom[1]/len_bottom
-
-                num_steps = max(1, int(len_top // t.snap_distance))
-                for i in range(num_steps):
-                    t1 = i * t.snap_distance / len_top
-                    t2 = (i + 1) * t.snap_distance / len_top
-
-                    # obere Kante
-                    x_top_start = Ax + (Bx - Ax) * t1
-                    y_top_start = Ay + (By - Ay) * t1
-                    x_top_end = Ax + (Bx - Ax) * t2
-                    y_top_end = Ay + (By - Ay) * t2
-
-                    # untere Kante
-                    x_bottom_start = Dx + (Cx - Dx) * t1
-                    y_bottom_start = Dy + (Cy - Dy) * t1
-                    x_bottom_end = Dx + (Cx - Dx) * t2
-                    y_bottom_end = Dy + (Cy - Dy) * t2
-
-                    # X-Diagonalen
-                    content += f'<line x1="{x_top_start}" y1="{y_top_start}" x2="{x_bottom_end}" y2="{y_bottom_end}" stroke="grey" stroke-width="4"/>'
-                    content += f'<line x1="{x_bottom_start}" y1="{y_bottom_start}" x2="{x_top_end}" y2="{y_top_end}" stroke="grey" stroke-width="4"/>'
-
-
-            ui.html(f'''
-            <svg width="100%" height="100%" style="position:absolute; top:0; left:0; pointer-events:none; background:#fff;">
-                {content}
-            </svg>
-            ''', sanitize=False)
-
-
 # UI AUFBAU
 ################################################################################################
 
     with ui.element('div').style(
         'position: relative; width: 1200px; height: 800px; overflow: hidden;  background: #fff;' # border: 1px solid #333;
     ) as stage_container:
-        
-        # Hintergrundbild (fängt Klicks ab)
-        #ui.image('/static/traverse.png') \
-        #    .style('position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; object-fit: contain; pointer-events: none;') # object-fit: contain;
-        
+         
         traverse_layer = ui.element('div').style(
             'position: absolute; top:0; left:0; width: 1200px; height: 800px; z-index: 5; pointer-events: none;'
         )
@@ -613,7 +491,8 @@ def create():
 
     # Initiale Zeichnung
     redraw_fixtures()
-    draw_traverses()
+    draw_traverses(traverse_layer, state.engine.traverses)
+
 
     ui.separator().classes('my-4')
 
