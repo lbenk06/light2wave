@@ -231,5 +231,395 @@
             "snap_point_index": 5
         }
     ],
-    "banks": []
+    "banks": [
+        {
+            "name": "Farbwechsel",
+            "scenes": [
+                {
+                    "name": "all red",
+                    "data": {
+                        "strobo_1": {
+                            "dimmer": 1.0,
+                            "red": 1.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "strobe": 0.0
+                        },
+                        "strobo_2": {
+                            "dimmer": 1.0,
+                            "red": 1.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "strobe": 0.0
+                        },
+                        "blinder_3": {
+                            "dimmer": 0.0,
+                            "white": 0.0
+                        },
+                        "blinder_4": {
+                            "dimmer": 0.0,
+                            "white": 0.0
+                        },
+                        "LED PAR": {
+                            "dimmer": 1.0,
+                            "red": 1.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "MovingHead1": {
+                            "dimmer": 1.0,
+                            "red": 1.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "pan": 0.0,
+                            "tilt": 0.0,
+                            "strobe": 0.0,
+                            "speed": 0.0
+                        }
+                    },
+                    "color": "#333333"
+                },
+                {
+                    "name": "all green",
+                    "data": {
+                        "strobo_1": {
+                            "dimmer": 1.0,
+                            "red": 0.0,
+                            "green": 1.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "strobe": 0.0
+                        },
+                        "strobo_2": {
+                            "dimmer": 1.0,
+                            "red": 0.0,
+                            "green": 1.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "strobe": 0.0
+                        },
+                        "blinder_3": {
+                            "dimmer": 0.0,
+                            "white": 0.0
+                        },
+                        "blinder_4": {
+                            "dimmer": 0.0,
+                            "white": 0.0
+                        },
+                        "LED PAR": {
+                            "dimmer": 1.0,
+                            "red": 0.0,
+                            "green": 1.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "MovingHead1": {
+                            "dimmer": 1.0,
+                            "red": 0.0,
+                            "green": 1.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "pan": 0.0,
+                            "tilt": 0.0,
+                            "strobe": 0.0,
+                            "speed": 0.0
+                        }
+                    },
+                    "color": "#333333"
+                },
+                {
+                    "name": "all blue",
+                    "data": {
+                        "strobo_1": {
+                            "dimmer": 1.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 1.0,
+                            "white": 0.0,
+                            "strobe": 0.0
+                        },
+                        "strobo_2": {
+                            "dimmer": 1.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 1.0,
+                            "white": 0.0,
+                            "strobe": 0.0
+                        },
+                        "blinder_3": {
+                            "dimmer": 0.0,
+                            "white": 0.0
+                        },
+                        "blinder_4": {
+                            "dimmer": 0.0,
+                            "white": 0.0
+                        },
+                        "LED PAR": {
+                            "dimmer": 1.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 1.0,
+                            "strobe": 0.0
+                        },
+                        "MovingHead1": {
+                            "dimmer": 1.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 1.0,
+                            "white": 0.0,
+                            "pan": 0.0,
+                            "tilt": 0.0,
+                            "strobe": 0.0,
+                            "speed": 0.0
+                        }
+                    },
+                    "color": "#333333"
+                },
+                {
+                    "name": "all white",
+                    "data": {
+                        "strobo_1": {
+                            "dimmer": 1.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "white": 1.0,
+                            "strobe": 0.0
+                        },
+                        "strobo_2": {
+                            "dimmer": 1.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "white": 1.0,
+                            "strobe": 0.0
+                        },
+                        "blinder_3": {
+                            "dimmer": 0.0,
+                            "white": 0.0
+                        },
+                        "blinder_4": {
+                            "dimmer": 0.0,
+                            "white": 0.0
+                        },
+                        "LED PAR": {
+                            "dimmer": 1.0,
+                            "red": 1.0,
+                            "green": 1.0,
+                            "blue": 1.0,
+                            "strobe": 0.0
+                        },
+                        "MovingHead1": {
+                            "dimmer": 1.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "white": 1.0,
+                            "pan": 0.0,
+                            "tilt": 0.0,
+                            "strobe": 0.0,
+                            "speed": 0.0
+                        }
+                    },
+                    "color": "#333333"
+                },
+                {
+                    "name": "MovingHeadGreen",
+                    "data": {
+                        "strobo_1": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "strobe": 0.0
+                        },
+                        "strobo_2": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "strobe": 0.0
+                        },
+                        "blinder_3": {
+                            "dimmer": 0.0,
+                            "white": 0.0
+                        },
+                        "blinder_4": {
+                            "dimmer": 0.0,
+                            "white": 0.0
+                        },
+                        "LED PAR": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "MovingHead1": {
+                            "dimmer": 1.0,
+                            "red": 0.0,
+                            "green": 1.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "pan": 0.0,
+                            "tilt": 0.0,
+                            "strobe": 0.0,
+                            "speed": 0.0
+                        }
+                    },
+                    "color": "#333333"
+                },
+                {
+                    "name": "MovingHeadRed",
+                    "data": {
+                        "strobo_1": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "strobe": 0.0
+                        },
+                        "strobo_2": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "strobe": 0.0
+                        },
+                        "blinder_3": {
+                            "dimmer": 0.0,
+                            "white": 0.0
+                        },
+                        "blinder_4": {
+                            "dimmer": 0.0,
+                            "white": 0.0
+                        },
+                        "LED PAR": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "MovingHead1": {
+                            "dimmer": 1.0,
+                            "red": 1.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "pan": 0.0,
+                            "tilt": 0.0,
+                            "strobe": 0.0,
+                            "speed": 0.0
+                        }
+                    },
+                    "color": "#333333"
+                },
+                {
+                    "name": "MovingHeadBlue",
+                    "data": {
+                        "strobo_1": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "strobe": 0.0
+                        },
+                        "strobo_2": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "strobe": 0.0
+                        },
+                        "blinder_3": {
+                            "dimmer": 0.0,
+                            "white": 0.0
+                        },
+                        "blinder_4": {
+                            "dimmer": 0.0,
+                            "white": 0.0
+                        },
+                        "LED PAR": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "MovingHead1": {
+                            "dimmer": 1.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 1.0,
+                            "white": 0.0,
+                            "pan": 0.0,
+                            "tilt": 0.0,
+                            "strobe": 0.0,
+                            "speed": 0.0
+                        }
+                    },
+                    "color": "#333333"
+                },
+                {
+                    "name": "Blinder",
+                    "data": {
+                        "strobo_1": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "strobe": 0.0
+                        },
+                        "strobo_2": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "strobe": 0.0
+                        },
+                        "blinder_3": {
+                            "dimmer": 1.0,
+                            "white": 1.0
+                        },
+                        "blinder_4": {
+                            "dimmer": 1.0,
+                            "white": 1.0
+                        },
+                        "LED PAR": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "MovingHead1": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "pan": 0.0,
+                            "tilt": 0.0,
+                            "strobe": 0.0,
+                            "speed": 0.0
+                        }
+                    },
+                    "color": "#333333"
+                }
+            ]
+        }
+    ]
 }
