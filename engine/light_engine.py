@@ -85,11 +85,22 @@ class LightEngine:
 
     def next_free_address(self, profile):
         """
-        Berechnet die nächste freie DMX-Adresse.
-        Summe aller belegten Kanäle + 1.
+        Berechnet die nächste absolut sichere, freie DMX-Adresse.
+        Sucht den höchsten belegten Kanal im gesamten Universum und setzt +1.
         """
-        used = sum(len(f.profile["channels"]) for f in self.fixtures)
-        return used + 1  # DMX ist 1-basiert
+        if not self.fixtures:
+            return 1  # Wenn noch keine Lampen da sind, starte bei 1
+            
+        highest_occupied_channel = 0
+        
+        for f in self.fixtures:
+            # Der letzte belegte Kanal dieser Lampe = Startadresse + Anzahl der Kanäle - 1
+            last_channel = f.address + len(f.profile["channels"]) - 1
+            
+            if last_channel > highest_occupied_channel:
+                highest_occupied_channel = last_channel
+                
+        return highest_occupied_channel + 1
 
 
 
