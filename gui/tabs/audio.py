@@ -2,6 +2,7 @@ from nicegui import ui
 import os
 import random
 import asyncio
+import time
 import tkinter as tk
 from tkinter import filedialog
 from gui.state import state
@@ -11,6 +12,9 @@ from audio.audio_file import audio_state, analyze_audio_background, toggle_playb
 
 # live audio file importieren
 from audio.audio_live import live_audio_state, get_input_devices, start_listening, stop_listening
+
+# magic auto modus
+from engine.magic_auto import magic_auto_state, on_beat as magic_on_beat, apply as magic_apply, EFFECT_OPTIONS
 
 # lokaler state für die gui-steuerung
 play_settings = {
@@ -29,12 +33,15 @@ play_settings = {
 }
 
 def create():
-    ui.label('SOUND TO LIGHT & SHOWS').classes('text-h4 text-white mb-4')
+    # Header
+    with ui.row().classes('w-full items-center justify-between mb-3'):
+        ui.label('SOUND TO LIGHT').classes('text-white font-black text-lg tracking-widest')
 
-    # audio quellen auswahl
-    with ui.row().classes('w-full items-center mb-6 bg-gray-800 p-2 rounded border border-gray-600'):
-        ui.label('Audio Quelle:').classes('text-lg font-bold text-gray-300 mr-4')
-        ui.radio(['MP3', 'LIVE'], value='MP3').bind_value(play_settings, 'source_mode').props('inline dark color=cyan')
+    # Audio-Quellschalter — Hardware-Button-Stil
+    with ui.element('div').classes('w-full mb-4 border border-[#1e1e28] bg-[#0f0f14] rounded-sm p-3'):
+        ui.label('AUDIO QUELLE').classes('console-label mb-3')
+        ui.radio(['MP3', 'LIVE'], value='MP3').bind_value(play_settings, 'source_mode') \
+            .props('inline dark color=cyan')
 
     with ui.row().classes('w-full gap-8 items-start'):
         
@@ -135,15 +142,26 @@ def create():
                 btn_live = ui.button('VERBINDEN', on_click=toggle_live).classes('w-full h-12 text-lg font-bold').props('color=green push')
 
         # rechts: playback und moduswahl
-        with ui.card().classes('w-6/12 bg-gray-900 border border-gray-700 p-6'):
-            ui.label('2. Show Steuerung').classes('text-xl font-bold text-gray-200 mb-4')
-            
-            lbl_state = ui.label("Phase: WARTEN").classes("text-2xl font-black text-blue-400 mb-2")
-            lbl_beat = ui.label("Beat: -- | Takt: --").classes("text-lg text-gray-300 mb-4")
+        with ui.element('div').classes('w-6/12 border border-[#1e1e28] bg-[#0f0f14] rounded-sm p-4'):
+            ui.label('SHOW STEUERUNG').classes('console-label mb-3')
+
+            # LCD-Anzeigen: Phase + Beat
+            with ui.row().classes('w-full gap-2 mb-4'):
+                with ui.column().classes('gap-1'):
+                    ui.label('PHASE').classes('console-label').style('border:none; padding:0;')
+                    lbl_state = ui.label('WARTEN') \
+                        .classes('lcd-display text-xl font-black tracking-widest phase-wait') \
+                        .style('min-width:130px; border-radius:2px; padding:4px 10px; border:1px solid #1a1a2a;')
+
+                with ui.column().classes('gap-1'):
+                    ui.label('BEAT / TAKT').classes('console-label').style('border:none; padding:0;')
+                    lbl_beat = ui.label('-- / --') \
+                        .classes('lcd-display text-xl font-black tracking-widest') \
+                        .style('min-width:110px; border-radius:2px; padding:4px 10px; border:1px solid #1a1a2a;')
             
             # hauptmodus
             ui.label('Live-Modus (Basis-Licht):').classes('text-sm text-gray-400 font-bold mt-2')
-            ui.radio(['Scene Sync', 'Custom Timeline'], value='Scene Sync').bind_value(play_settings, 'mode').props('inline dark color=cyan').classes('mb-2')
+            ui.radio(['Scene Sync', 'Custom Timeline', 'Magic Auto'], value='Scene Sync').bind_value(play_settings, 'mode').props('inline dark color=cyan').classes('mb-2')
             
             # bank auswahl für szenen sync
             with ui.column().bind_visibility_from(play_settings, 'mode', lambda m: m == 'Scene Sync').classes('w-full bg-gray-800 p-3 rounded mb-4 border border-gray-600'):
@@ -180,9 +198,128 @@ def create():
                     ui.label('DROP').classes('w-16 text-red-500 font-bold text-sm')
                     ui.select(combo_options, multiple=True, value=play_settings["custom_timeline"]["DROP"]).bind_value(play_settings["custom_timeline"], "DROP").props('dark color=cyan standout dense use-chips').classes('flex-grow')
 
+            # --- MAGIC AUTO MODUS ---
+            with ui.column().bind_visibility_from(play_settings, 'mode', lambda m: m == 'Magic Auto').classes('w-full bg-gray-800 p-3 rounded mb-2 border border-yellow-700 gap-2'):
+                ui.label('MAGIC AUTO - Light DJ').classes('text-sm font-bold text-yellow-400')
+
+                # --- AUTOMATIK ---
+                ui.label('AUTOMATIK').classes('text-xs text-gray-400 font-bold mt-1')
+                with ui.column().classes('w-full bg-gray-900 p-2 rounded border border-gray-600 gap-1'):
+                    ui.checkbox('Effekte automatisch wechseln (nach Phase)', value=True).bind_value(magic_auto_state, 'auto_effects').classes('text-gray-200 text-xs')
+
+                    with ui.row().classes('w-full items-center gap-3').bind_visibility_from(magic_auto_state, 'auto_effects'):
+                        ui.label('Wechsel alle').classes('text-gray-400 text-xs whitespace-nowrap')
+                        ui.slider(min=1, max=32, step=1).bind_value(magic_auto_state, 'effect_change_beats').props('dark color=yellow label-always').classes('flex-grow')
+                        ui.label('Beats').classes('text-gray-400 text-xs whitespace-nowrap')
+
+                # --- FARBE ---
+                ui.label('FARBE').classes('text-xs text-gray-400 font-bold mt-2')
+
+                # Farbpaletten-Auswahl
+                from engine.magic_auto import COLOR_PALETTES
+                ui.select(
+                    options=list(COLOR_PALETTES.keys()),
+                    value='Club',
+                    label='Palette'
+                ).bind_value(magic_auto_state, 'color_palette').props('dark color=cyan standout dense').classes('w-full mb-1')
+
+                # Farbvorschau-Box (zeigt Custom-Farbe oder Palette)
+                color_preview = ui.element('div').style(
+                    'width: 100%; height: 20px; border-radius: 6px; '
+                    'background: rgb(51, 0, 255); border: 1px solid #555;'
+                )
+
+                # Custom-Slider (nur sichtbar wenn Palette = Custom)
+                with ui.grid(columns=2).classes('w-full gap-x-4 gap-y-0').bind_visibility_from(magic_auto_state, 'color_palette', lambda v: v == 'Custom'):
+                    ui.label('Rot').classes('text-red-400 text-xs self-center')
+                    ui.slider(min=0, max=1, step=0.01).bind_value(magic_auto_state, 'red').props('dark color=red label-always')
+
+                    ui.label('Gruen').classes('text-green-400 text-xs self-center')
+                    ui.slider(min=0, max=1, step=0.01).bind_value(magic_auto_state, 'green').props('dark color=green label-always')
+
+                    ui.label('Blau').classes('text-blue-400 text-xs self-center')
+                    ui.slider(min=0, max=1, step=0.01).bind_value(magic_auto_state, 'blue').props('dark color=blue label-always')
+
+                    ui.label('Weiss').classes('text-gray-200 text-xs self-center')
+                    ui.slider(min=0, max=1, step=0.01).bind_value(magic_auto_state, 'white').props('dark color=white label-always')
+
+                # --- INTENSITAET ---
+                ui.label('INTENSITAET').classes('text-xs text-gray-400 font-bold mt-2')
+                with ui.grid(columns=2).classes('w-full gap-x-4 gap-y-0'):
+                    ui.label('Helligkeit').classes('text-gray-300 text-xs self-center')
+                    ui.slider(min=0, max=1, step=0.01).bind_value(magic_auto_state, 'brightness').props('dark color=yellow label-always')
+
+                    ui.label('Beat-Blinder').classes('text-gray-300 text-xs self-center')
+                    ui.slider(min=0, max=1, step=0.01).bind_value(magic_auto_state, 'blinder_strength').props('dark color=orange label-always')
+
+                    ui.label('Abklingen').classes('text-gray-300 text-xs self-center')
+                    ui.slider(min=0, max=1, step=0.01).bind_value(magic_auto_state, 'fade').props('dark color=purple label-always').tooltip('0 = Blinder-Flash sofort weg, 1 = langes Nachleuchten')
+
+                    ui.label('Strobe').classes('text-gray-300 text-xs self-center')
+                    ui.slider(min=0, max=1, step=0.01).bind_value(magic_auto_state, 'strobe_amount').props('dark color=white label-always')
+
+                # --- UEBERBLEND ---
+                ui.label('UEBERBLEND').classes('text-xs text-gray-400 font-bold mt-2')
+                with ui.grid(columns=2).classes('w-full gap-x-4 gap-y-0'):
+                    ui.label('Farb-Fade').classes('text-gray-300 text-xs self-center')
+                    ui.slider(min=0, max=1, step=0.01).bind_value(magic_auto_state, 'color_fade').props('dark color=teal label-always').tooltip('0 = harter Farbwechsel, 1 = weiches Ineinanderfaden')
+
+                # --- BLACKOUT ---
+                ui.label('BLACKOUT').classes('text-xs text-gray-400 font-bold mt-2')
+                with ui.grid(columns=2).classes('w-full gap-x-4 gap-y-0'):
+                    ui.label('Alle N Beats').classes('text-gray-300 text-xs self-center')
+                    ui.slider(min=0, max=32, step=1).bind_value(magic_auto_state, 'blackout_interval').props('dark color=red label-always').tooltip('0 = nie, z.B. 8 = alle 8 Beats ein Blackout')
+
+                    ui.label('Dauer (sek)').classes('text-gray-300 text-xs self-center')
+                    ui.slider(min=0.05, max=2.0, step=0.05).bind_value(magic_auto_state, 'blackout_duration').props('dark color=red-4 label-always')
+
+                # --- EFFEKT (manuell, nur wenn auto_effects=False) ---
+                with ui.column().classes('w-full gap-1').bind_visibility_from(magic_auto_state, 'auto_effects', lambda v: not v):
+                    ui.label('EFFEKT (manuell)').classes('text-xs text-gray-400 font-bold mt-2')
+                    effect_select = ui.select(
+                        options=list(EFFECT_OPTIONS.keys()),
+                        value='Keiner'
+                    ).props('dark color=cyan standout dense').classes('w-full')
+
+                    def on_effect_change(e):
+                        magic_auto_state['effect'] = EFFECT_OPTIONS.get(e.value, 'none')
+                        magic_auto_state['_effect_start'] = time.time()
+
+                    effect_select.on_value_change(on_effect_change)
+
+                with ui.row().classes('w-full items-center gap-3 mt-1'):
+                    ui.label('Max Geschw.').classes('text-gray-300 text-xs whitespace-nowrap')
+                    ui.slider(min=0.1, max=5.0, step=0.1).bind_value(magic_auto_state, 'effect_speed').props('dark color=cyan label-always').classes('flex-grow')
+
+                ui.separator().classes('bg-gray-600')
+                ui.checkbox('Phasen-Reaktion (BREAK / BUILDUP / DROP)', value=True).bind_value(magic_auto_state, 'phase_react').classes('text-gray-300 text-xs')
+
+                # Timer fuer Farbvorschau-Update
+                def update_color_preview():
+                    palette_name = magic_auto_state['color_palette']
+                    if palette_name != 'Custom':
+                        from engine.magic_auto import COLOR_PALETTES as CP
+                        palette = CP.get(palette_name)
+                        if palette:
+                            cidx = magic_auto_state['_color_idx'] % len(palette)
+                            pr, pg, pb, _ = palette[cidx]
+                            r_v, g_v, b_v = int(pr * 255), int(pg * 255), int(pb * 255)
+                        else:
+                            r_v = g_v = b_v = 128
+                    else:
+                        r_v = int(magic_auto_state['red'] * 255)
+                        g_v = int(magic_auto_state['green'] * 255)
+                        b_v = int(magic_auto_state['blue'] * 255)
+                    color_preview.style(
+                        f'width: 100%; height: 20px; border-radius: 6px; '
+                        f'background: rgb({r_v},{g_v},{b_v}); border: 1px solid #555;'
+                    )
+
+                ui.timer(0.1, update_color_preview)
+
             # overlay flash- automatik
             ui.separator().classes('bg-gray-700 my-2')
-            ui.checkbox('⚡ Flash Automatik zuschalten (Magic Mode)', value=True).bind_value(play_settings, 'flash_automatik').classes('mb-4 text-yellow-400 font-bold')
+            ui.checkbox('Flash Automatik zuschalten (Magic Mode)', value=True).bind_value(play_settings, 'flash_automatik').bind_visibility_from(play_settings, 'mode', lambda m: m != 'Magic Auto').classes('mb-4 text-yellow-400 font-bold')
 
             # takt korrektur (nur bei mp3)
             with ui.row().classes('gap-4 mb-6').bind_visibility_from(play_settings, 'source_mode', lambda m: m == 'MP3'):
@@ -275,8 +412,12 @@ def create():
                                         for k, v in data[f.id].items():
                                             f.set(k, v)
 
+                # modus 3 magic auto (beat-trigger)
+                elif play_settings["mode"] == "Magic Auto":
+                    magic_on_beat(phase)
+
                 # flash automatik overlay
-                if play_settings["flash_automatik"]:
+                if play_settings["flash_automatik"] and play_settings["mode"] != "Magic Auto":
                     flash_events = [e for e in state.events if e.type == "flash"]
                     if flash_events:
                         if phase == "DROP" or beat_in_bar == 1:
@@ -295,7 +436,7 @@ def create():
                     b_idx = audio_state["current_beat_idx"]
                     if b_idx < len(audio_state["beat_times"]) and elapsed_time >= audio_state["beat_times"][b_idx]:
                         beat_in_bar = ((b_idx + audio_state["beat_offset"]) % 4) + 1
-                        lbl_beat.set_text(f"Beat total: {b_idx + 1}   |   Takt: {beat_in_bar} / 4")
+                        lbl_beat.set_text(f"{b_idx + 1:04d}  /{beat_in_bar}/4")
                         
                         if beat_in_bar == 1: 
                             lbl_beat.classes('text-purple-400 font-bold', remove='text-gray-300')
@@ -315,13 +456,13 @@ def create():
                         current_state = audio_state["structure"][f_idx]
                         
                         if current_state != audio_state["last_state"]:
-                            lbl_state.set_text(f"Phase: {current_state}")
-                            if current_state == "DROP": 
-                                lbl_state.classes('text-red-500', remove='text-orange-400 text-blue-400')
-                            elif current_state == "BUILDUP": 
-                                lbl_state.classes('text-orange-400', remove='text-red-500 text-blue-400')
-                            else: 
-                                lbl_state.classes('text-blue-400', remove='text-red-500 text-orange-400')
+                            lbl_state.set_text(current_state)
+                            if current_state == "DROP":
+                                lbl_state.classes('phase-drop', remove='phase-buildup phase-break phase-wait')
+                            elif current_state == "BUILDUP":
+                                lbl_state.classes('phase-buildup', remove='phase-drop phase-break phase-wait')
+                            else:
+                                lbl_state.classes('phase-break', remove='phase-drop phase-buildup phase-wait')
                                 
                             audio_state["last_state"] = current_state
 
@@ -347,13 +488,13 @@ def create():
                     # phase kommt jetzt live aus der audio_live.py erkennung
                     live_phase = live_audio_state.get("phase", "DROP")
                     
-                    lbl_state.set_text(f"Phase: {live_phase} (Live)")
-                    if live_phase == "DROP": 
-                        lbl_state.classes('text-red-500', remove='text-orange-400 text-blue-400')
-                    elif live_phase == "BUILDUP": 
-                        lbl_state.classes('text-orange-400', remove='text-red-500 text-blue-400')
-                    else: 
-                        lbl_state.classes('text-blue-400', remove='text-red-500 text-orange-400')
+                    lbl_state.set_text(live_phase)
+                    if live_phase == "DROP":
+                        lbl_state.classes('phase-drop', remove='phase-buildup phase-break phase-wait')
+                    elif live_phase == "BUILDUP":
+                        lbl_state.classes('phase-buildup', remove='phase-drop phase-break phase-wait')
+                    else:
+                        lbl_state.classes('phase-break', remove='phase-drop phase-buildup phase-wait')
 
                     # beat aus der live berechnung
                     if live_audio_state["beat_triggered"]:
@@ -369,4 +510,15 @@ def create():
                         # echte live phase an den trigger übergeben
                         trigger_lights(beat_in_bar, live_phase)
 
+            def magic_auto_ticker():
+                """Kontinuierlicher 100 Hz Update fuer Magic Auto (smooth fading, strobe, effekte)."""
+                if play_settings["mode"] != "Magic Auto":
+                    return
+                if play_settings["source_mode"] == "MP3":
+                    phase = audio_state.get("last_state", "DROP")
+                else:
+                    phase = live_audio_state.get("phase", "DROP")
+                magic_apply(state.engine, phase)
+
             ui.timer(0.01, audio_ticker)
+            ui.timer(0.01, magic_auto_ticker)

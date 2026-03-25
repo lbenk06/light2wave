@@ -38,7 +38,7 @@ def create():
     
     # Header Zeile: Titel links, Refresh-Button rechts
     with ui.row().classes('w-full items-center justify-between mb-4'):
-        ui.label('Geräte Steuerung').classes('text-h4')
+        ui.label('GERÄTE STEUERUNG').classes('text-h4 text-white')
         
         # HIER IST DER REFRESH BUTTON
         # Er ruft update_ui() auf, um die Slider neu zu laden
@@ -123,17 +123,16 @@ def create():
         with channels_container:
             for i, ch in enumerate(editor_state["channels"]):
                 with ui.row().classes('w-full items-center gap-2'):
-                    ui.label(f"CH {i+1}").classes('font-bold text-grey w-12')
-                    
-                    # Auswahl der Rolle
+                    ui.label(f"CH {i+1:02d}").classes('font-mono text-[10px] text-cyan-600 font-black w-10')
+
                     ui.select(
                         options=['dimmer', 'red', 'green', 'blue', 'white', 'strobe', 'pan', 'tilt', 'speed', 'unused'],
                         value=ch['role'],
                         on_change=lambda e, idx=i: update_channel_role(idx, e.value)
-                    ).classes('w-40')
-                    
-                    # Löschen Button
-                    ui.button(on_click=lambda _, idx=i: remove_channel(idx), icon='delete').props('flat round color=red dense')
+                    ).props('dark standout dense color=cyan').classes('w-40')
+
+                    ui.button(on_click=lambda _, idx=i: remove_channel(idx), icon='close') \
+                        .props('flat round dense color=red')
 
     def update_channel_role(index, new_role):
         editor_state["channels"][index]["role"] = new_role
@@ -193,20 +192,29 @@ def create():
         refresh_editor()
 
     # -- UI Element (Aufklappbar) --
-    with ui.expansion('Neues Profil erstellen', icon='library_add').classes('w-full bg-grey-1 p-4 rounded shadow-sm'):
-        
-        with ui.column().classes('w-full max-w-2xl'):
-            ui.label("Eigene Gerätedefinition anlegen").classes('text-grey-6 mb-2')
-            
+    with ui.expansion('NEUES PROFIL ERSTELLEN', icon='library_add') \
+            .classes('w-full') \
+            .props('dark header-class="text-cyan-400 font-black tracking-widest text-xs"') \
+            .style('background:#0f0f14; border:1px solid #1e1e28; border-radius:2px;'):
+
+        with ui.column().classes('w-full max-w-2xl gap-4 pt-2'):
+            ui.label('Eigene Gerätedefinition anlegen').classes('console-label')
+
             # Name Input
-            name_input = ui.input(label="Profil Name (z.B. 'Mein LED Bar')").classes('w-full mb-4')
-            
-            ui.label("Kanalbelegung:").classes('text-lg')
-            
+            name_input = ui.input(label="Profil Name (z.B. 'Mein LED Bar')") \
+                .props('dark standout color=cyan') \
+                .classes('w-full')
+
+            ui.label('KANALBELEGUNG').classes('console-label mt-2')
+
             # Kanal Liste rendern
-            refresh_editor() 
-            
+            refresh_editor()
+
             # Buttons
-            with ui.row().classes('mt-4'):
-                ui.button('Kanal +', on_click=add_channel, icon='add').props('outline')
-                ui.button('Speichern', on_click=save_new_profile, icon='save').props('color=green')
+            with ui.row().classes('mt-2 gap-2'):
+                ui.button('KANAL +', on_click=add_channel, icon='add') \
+                    .props('dense flat color=cyan') \
+                    .classes('text-[10px] font-black tracking-widest')
+                ui.button('SPEICHERN', on_click=save_new_profile, icon='save') \
+                    .props('dense push color=green') \
+                    .classes('text-[10px] font-black tracking-widest')

@@ -33,10 +33,10 @@
             "y": 240.0,
             "address": 1,
             "values": {
-                "dimmer": 0.0,
-                "red": 0.0,
+                "dimmer": 0.00999929318964019,
+                "red": 1.0,
                 "green": 0.0,
-                "blue": 0.0,
+                "blue": 1.0,
                 "white": 0.0,
                 "strobe": 0.0
             },
@@ -50,10 +50,10 @@
             "y": 240.0,
             "address": 7,
             "values": {
-                "dimmer": 0.0,
-                "red": 0.0,
+                "dimmer": 0.00999929318964019,
+                "red": 1.0,
                 "green": 0.0,
-                "blue": 0.0,
+                "blue": 1.0,
                 "white": 0.0,
                 "strobe": 0.0
             },
@@ -67,7 +67,7 @@
             "y": 160.0,
             "address": 13,
             "values": {
-                "dimmer": 0.0,
+                "dimmer": 0.00999929318964019,
                 "white": 0.0
             },
             "traverse": "Front-Traverse",
@@ -80,7 +80,7 @@
             "y": 160.0,
             "address": 15,
             "values": {
-                "dimmer": 0.0,
+                "dimmer": 0.00999929318964019,
                 "white": 0.0
             },
             "traverse": "Front-Traverse",
@@ -93,10 +93,10 @@
             "y": 240.0,
             "address": 17,
             "values": {
-                "dimmer": 0.0,
-                "red": 0.0,
+                "dimmer": 0.00999929318964019,
+                "red": 1.0,
                 "green": 0.0,
-                "blue": 0.0,
+                "blue": 1.0,
                 "strobe": 0.0
             },
             "traverse": "Front-Traverse",
@@ -109,10 +109,10 @@
             "y": 240.0,
             "address": 23,
             "values": {
-                "dimmer": 0.0,
-                "red": 0.0,
+                "dimmer": 0.00999929318964019,
+                "red": 1.0,
                 "green": 0.0,
-                "blue": 0.0,
+                "blue": 1.0,
                 "strobe": 0.0
             },
             "traverse": "Front-Traverse",
@@ -125,10 +125,10 @@
             "y": 240.0,
             "address": 29,
             "values": {
-                "dimmer": 0.0,
-                "red": 0.0,
+                "dimmer": 0.00999929318964019,
+                "red": 1.0,
                 "green": 0.0,
-                "blue": 0.0,
+                "blue": 1.0,
                 "strobe": 0.0
             },
             "traverse": "Front-Traverse",
@@ -141,10 +141,10 @@
             "y": 240.0,
             "address": 35,
             "values": {
-                "dimmer": 0.0,
-                "red": 0.0,
+                "dimmer": 0.00999929318964019,
+                "red": 1.0,
                 "green": 0.0,
-                "blue": 0.0,
+                "blue": 1.0,
                 "strobe": 0.0
             },
             "traverse": "Front-Traverse",
@@ -157,10 +157,10 @@
             "y": 325.0,
             "address": 41,
             "values": {
-                "dimmer": 0.0,
-                "red": 0.0,
+                "dimmer": 0.00999929318964019,
+                "red": 1.0,
                 "green": 0.0,
-                "blue": 0.0,
+                "blue": 1.0,
                 "white": 0.0,
                 "pan": 0.0,
                 "tilt": 0.0,
@@ -177,10 +177,10 @@
             "y": 425.0,
             "address": 50,
             "values": {
-                "dimmer": 0.0,
-                "red": 0.0,
+                "dimmer": 0.00999929318964019,
+                "red": 1.0,
                 "green": 0.0,
-                "blue": 0.0,
+                "blue": 1.0,
                 "white": 0.0,
                 "pan": 0.0,
                 "tilt": 0.0,
@@ -197,10 +197,10 @@
             "y": 325.0,
             "address": 59,
             "values": {
-                "dimmer": 0.0,
-                "red": 0.0,
+                "dimmer": 0.00999929318964019,
+                "red": 1.0,
                 "green": 0.0,
-                "blue": 0.0,
+                "blue": 1.0,
                 "white": 0.0,
                 "pan": 0.0,
                 "tilt": 0.0,
@@ -217,10 +217,10 @@
             "y": 425.0,
             "address": 68,
             "values": {
-                "dimmer": 0.0,
-                "red": 0.0,
+                "dimmer": 0.00999929318964019,
+                "red": 1.0,
                 "green": 0.0,
-                "blue": 0.0,
+                "blue": 1.0,
                 "white": 0.0,
                 "pan": 0.0,
                 "tilt": 0.0,

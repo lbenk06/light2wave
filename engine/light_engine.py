@@ -15,6 +15,11 @@ class LightEngine:
         self.banks=[] #wird von projects_io geladen
         self.active_overlays=[] #laufende Events
 
+        self.master_dimmer = 1.0  # 0.0 = Blackout, 1.0 = volle Helligkeit
+
+        self.parked_fixtures: set = set()          # Indices der geparkten Fixtures
+        self.parked_values: dict = {}              # fixture_idx -> liste von Kanalwerten
+
         self.load_user_profiles()
 
         #inteface
@@ -35,6 +40,34 @@ class LightEngine:
             except Exception as e:
                 print(f"Fehler beim Laden der User-Profile: {e}")
 
+    def park_fixture(self, fixture_idx: int):
+        """Friert Fixture ein — aktuelle Kanalwerte werden fixiert, Effekte ignoriert"""
+        if fixture_idx >= len(self.fixtures):
+            return
+        fix = self.fixtures[fixture_idx]
+        start = fix.address - 1
+        n = len(fix.profile["channels"])
+        self.parked_values[fixture_idx] = list(self.universe.channels[start:start + n])
+        self.parked_fixtures.add(fixture_idx)
+
+    def unpark_fixture(self, fixture_idx: int):
+        """Gibt Fixture wieder frei — Effekte wirken wieder"""
+        self.parked_fixtures.discard(fixture_idx)
+        self.parked_values.pop(fixture_idx, None)
+
+    def set_parked_color(self, fixture_idx: int, **role_values):
+        """Setzt einzelne Kanalwerte für ein geparktes Fixture (z.B. red=1.0, white=0.5)"""
+        if fixture_idx not in self.parked_fixtures:
+            return
+        fix = self.fixtures[fixture_idx]
+        ch_roles = [ch["role"] for ch in fix.profile["channels"]]
+        vals = list(self.parked_values.get(fixture_idx, [0] * len(ch_roles)))
+        for role, val in role_values.items():
+            if role in ch_roles:
+                i = ch_roles.index(role)
+                vals[i] = int(max(0.0, min(1.0, val)) * 255)
+        self.parked_values[fixture_idx] = vals
+
     def add_fixture(self, fixture: Fixture):
         """Fügt ein Fixture zur Engine hinzu"""
         self.fixtures.append(fixture)
@@ -49,6 +82,23 @@ class LightEngine:
         self.universe.clear()
         for fixture in self.fixtures:
             fixture.render(self.universe.channels)
+
+        #3. Geparkte Fixtures: überschreiben Effekte mit eingefrorenen Werten
+        for idx in self.parked_fixtures:
+            if idx < len(self.fixtures):
+                fix = self.fixtures[idx]
+                start = fix.address - 1
+                values = self.parked_values.get(idx, [])
+                for i, v in enumerate(values):
+                    if start + i < 512:
+                        self.universe.channels[start + i] = v
+
+        #4. Master Dimmer: skaliert alle Kanalwerte am Ende
+        if self.master_dimmer < 1.0:
+            m = max(0.0, self.master_dimmer)
+            for i in range(512):
+                self.universe.channels[i] = int(self.universe.channels[i] * m)
+
         return self.universe.channels
 
     def create_fixture(self, profile_id, x=0, y=0, fixture_id=None, address=None):

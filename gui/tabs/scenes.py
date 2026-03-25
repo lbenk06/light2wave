@@ -1,66 +1,54 @@
 from nicegui import ui
 from gui.state import state
-from projects.projects_io import save_project, load_project, load_fixtures_from_json
+from projects.projects_io import save_project
+
 
 def create():
-    
-    # Initialisieren
+
     if not hasattr(state.engine, 'banks'):
         state.engine.banks = []
-    
-    # Lokaler State für die aktuelle Bank (Index)
+
     current_bank_index = 0 if state.engine.banks else -1
 
-    # Container-Referenzen
     refs = {
-        "bank_tabs": None,      # Die Tabs oben
-        "scene_grid": None,     # Die Buttons unten
+        "bank_tabs": None,
+        "scene_grid": None,
     }
 
-    # Logik Funktionen
+    # ── Logik-Funktionen (unverändert) ──────────────────────────────
 
     def refresh_ui():
-        """Zeichnet alles neu"""
         refs["bank_tabs"].clear()
         refs["scene_grid"].clear()
-        
         draw_programming_area()
         draw_playback_area()
 
     def add_bank():
-        nonlocal current_bank_index 
-        
+        nonlocal current_bank_index
         if not inp_bank_name.value:
             ui.notify("Bitte Bank-Namen eingeben", color="orange")
             return
-        
         new_bank = {"name": inp_bank_name.value, "scenes": []}
         state.engine.banks.append(new_bank)
-        # bank auch in der json speichern
         save_project(state.engine, "projects/my_show.json")
         current_bank_index = len(state.engine.banks) - 1
-        
         inp_bank_name.value = ""
         refresh_ui()
         ui.notify(f"Bank '{new_bank['name']}' erstellt")
 
     def delete_current_bank():
-        nonlocal current_bank_index 
-
+        nonlocal current_bank_index
         if current_bank_index == -1: return
-        
         deleted_name = state.engine.banks[current_bank_index]["name"]
         state.engine.banks.pop(current_bank_index)
-        #auch aus der json löschen
         save_project(state.engine, "projects/my_show.json")
         current_bank_index = 0 if state.engine.banks else -1
-        
         refresh_ui()
         ui.notify(f"Bank '{deleted_name}' gelöscht", color="red")
 
     def select_bank(e):
-        nonlocal current_bank_index 
-        current_bank_index = e.value 
+        nonlocal current_bank_index
+        current_bank_index = e.value
         refs["scene_grid"].clear()
         draw_playback_area()
 
@@ -71,40 +59,29 @@ def create():
         if not inp_scene_name.value:
             ui.notify("Szenen-Namen eingeben!", color="orange")
             return
-
-        # snapshot logik: szene= snapshot von allen 512 kanälen
         scene_data = {}
         for fixture in state.engine.fixtures:
             scene_data[fixture.id] = fixture.values.copy()
-
         new_scene = {
             "name": inp_scene_name.value,
             "data": scene_data,
-            "color": inp_scene_color.value  # NEU: Eigene Farbe mit in die JSON speichern
+            "color": inp_scene_color.value
         }
-
         state.engine.banks[current_bank_index]["scenes"].append(new_scene)
-        # Szene auch in der json speichern
         save_project(state.engine, "projects/my_show.json")
         inp_scene_name.value = ""
-        
         refs["scene_grid"].clear()
         draw_playback_area()
         ui.notify("Szene gespeichert!", color="green")
 
     def load_scene(scene):
-        """Feuert die Szene ab"""
         data = scene["data"]
         for fixture in state.engine.fixtures:
             if fixture.id in data:
                 saved_values = data[fixture.id]
-                
-                # Neues Format (Dictionary)
                 if isinstance(saved_values, dict):
                     for role, val in saved_values.items():
                         fixture.set(role, val)
-                
-                # Fallback mit altem Format (RGB-Tupel) - wird in neuen Szenen nicht mehr gespeichert, aber alte Szenen bleiben so kompatibel
                 elif isinstance(saved_values, (list, tuple)):
                     if hasattr(fixture, 'set_color'):
                         fixture.set_color(saved_values[0], saved_values[1], saved_values[2])
@@ -112,125 +89,127 @@ def create():
     def delete_scene(scene):
         if current_bank_index == -1: return
         bank = state.engine.banks[current_bank_index]
-        
         if scene in bank["scenes"]:
             bank["scenes"].remove(scene)
-            # Szene auch aus der json löschen
             save_project(state.engine, "projects/my_show.json")
-            # UI neu zeichnen
             refs["scene_grid"].clear()
             draw_playback_area()
             ui.notify("Szene gelöscht", color="red")
 
+    # ── PROGRAMMER-PANEL ────────────────────────────────────────────
+    with ui.element('div').classes('w-full mb-3 border border-[#1e1e28] bg-[#0f0f14] rounded-sm p-3'):
+        ui.label('PROGRAMMER').classes('console-label mb-3')
 
-    # UI Layout
+        with ui.row().classes('w-full items-center gap-2 flex-wrap'):
+            # Bank erstellen
+            inp_bank_name = ui.input() \
+                .props('dense dark standout placeholder="Bank Name" color=cyan') \
+                .classes('font-mono text-xs').style('max-width:150px;')
+            ui.button('+ BANK', on_click=add_bank) \
+                .props('dense flat color=cyan') \
+                .classes('text-[10px] font-black tracking-widest')
+            ui.button('DEL BANK', on_click=delete_current_bank) \
+                .props('dense flat color=red') \
+                .classes('text-[10px] font-black tracking-widest')
 
-    # oben Programmier Modus zum Banken erstellen und Szenen speichern
-    with ui.card().classes('w-full mb-4 bg-gray-800 border border-gray-600'):
-        ui.label('PROGRAMMIER MODUS').classes('text-xs font-bold text-gray-400 mb-2')
-        
-        with ui.row().classes('w-full gap-8 items-start'):
-            
-            # SPALTE A: Bank Verwaltung
-            with ui.column().classes('gap-2'):
-                ui.label('1. Banken').classes('font-bold text-white')
-                with ui.row():
-                    inp_bank_name = ui.input('Name').props('dense dark placeholder="Bank Name"')
-                    ui.button(icon='add', on_click=add_bank).props('dense round color=green')
-                
-                ui.button('Bank löschen', on_click=delete_current_bank).props('flat dense color=red size=sm')
+            # Vertikaler Trenner
+            ui.element('div').style('width:1px; height:24px; background:#1e1e28; margin:0 6px;')
 
-            # SPALTE B: Szenen Speichern
-            with ui.column().classes('gap-2'):
-                ui.label('2. Look speichern').classes('font-bold text-white')
-                with ui.row().classes('items-center'):
-                    inp_scene_name = ui.input('Name').props('dense dark placeholder="Szenen Name"')
-                    
-                    # NEU: Farbwähler für den Button
-                    inp_scene_color = ui.color_input(label='Farbe', value='#333333').props('dense dark').classes('w-24')
-                    
-                    ui.button('SPEICHERN', on_click=save_scene).props('dense color=blue icon=save')
+            # Szene speichern
+            inp_scene_name = ui.input() \
+                .props('dense dark standout placeholder="Szenen Name" color=cyan') \
+                .classes('font-mono text-xs').style('max-width:160px;')
+            inp_scene_color = ui.color_input(value='#333333') \
+                .props('dense dark').classes('w-20')
+            ui.button('SAVE', on_click=save_scene, icon='save') \
+                .props('dense push color=green') \
+                .classes('text-[10px] font-black tracking-widest')
 
-        # Die Bank-Tabs
-        ui.separator().classes('my-2 bg-gray-600')
-        refs["bank_tabs"] = ui.tabs().classes('w-full text-left text-white').props('active-color=cyan indicator-color=cyan dense')
+        # Bank-Tabs
+        ui.element('div').style('height:1px; background:#1a1a24; margin:10px 0 6px;')
+        refs["bank_tabs"] = ui.tabs() \
+            .classes('') \
+            .props('dense active-color=cyan indicator-color=cyan align=left')
         refs["bank_tabs"].on_value_change(select_bank)
 
+    # ── PLAYBACK-GRID ────────────────────────────────────────────────
+    with ui.row().classes('items-center gap-2 mb-2'):
+        ui.label('PLAYBACK').classes('console-label').style('border:none; padding:0;')
+        ui.element('div').style('flex:1; height:1px; background:#1a1a24;')
 
-    # unten Live PLayback mit Szenen Auswahl
-    ui.label('LIVE PLAYBACK').classes('text-xl font-bold mt-4 mb-2 text-white')
-    refs["scene_grid"] = ui.row().classes('w-full gap-4 wrap')
+    refs["scene_grid"] = ui.element('div').classes('flex flex-wrap gap-1')
 
+    # ── Zeichenfunktionen ─────────────────────────────────────────────
 
-    # Funktionen zum Zeichnen der Bereiche
     def draw_programming_area():
         with refs["bank_tabs"]:
             if not state.engine.banks:
-                ui.tab(name=-1, label='Keine Banken')
+                ui.tab(name=-1, label='KEINE BANKS')
                 return
-
             for i, bank in enumerate(state.engine.banks):
-                ui.tab(name=i, label=bank["name"])
-            
+                ui.tab(name=i, label=bank["name"].upper())
             if current_bank_index != -1:
                 refs["bank_tabs"].value = current_bank_index
 
+    def _scene_color(scene):
+        c = scene.get("color", "#333333")
+        if c and c != "#333333":
+            return c
+        if scene.get("data"):
+            vals = list(scene["data"].values())[0]
+            if isinstance(vals, dict):
+                dim = vals.get("dimmer", 1.0)
+                r = int(vals.get("red",   0) * dim * 255)
+                g = int(vals.get("green", 0) * dim * 255)
+                b = int(vals.get("blue",  0) * dim * 255)
+                if r + g + b > 0:
+                    return f"rgb({r},{g},{b})"
+        return "#2a2a38"
+
     def draw_playback_area():
-        
         refs["scene_grid"].clear()
-        
+
         with refs["scene_grid"]:
             if current_bank_index == -1 or not state.engine.banks:
-                ui.label('Keine Bank ausgewählt.').classes('text-gray-500 italic')
+                ui.label('— Keine Bank ausgewählt —') \
+                    .classes('text-[10px] font-mono text-[#28283a] tracking-widest uppercase p-6')
                 return
 
             bank = state.engine.banks[current_bank_index]
-            
+
             if not bank["scenes"]:
-                ui.label(f"Bank '{bank['name']}' ist leer.").classes('text-gray-500')
+                ui.label(f'— {bank["name"]} ist leer —') \
+                    .classes('text-[10px] font-mono text-[#28283a] tracking-widest uppercase p-6')
                 return
 
-            #Für jede Szene eine Karte zeichnen
-            for scene in bank["scenes"]:
-                
-                
-                # Erst prüfen, ob eine Custom-Farbe in der JSON gespeichert wurde
-                custom_color = scene.get("color")
-                if custom_color and custom_color != "#333333":
-                    preview_color = custom_color
-                else:
-                    # Alter Fallback-> Farbe aus der ersten Lampe berechnen
-                    preview_color = "#333"
-                    if scene.get("data"):
-                        vals = list(scene["data"].values())[0]
-                        r, g, b = 0, 0, 0
-                        if isinstance(vals, dict):
-                            dim = vals.get("dimmer", 1.0)
-                            r = int(vals.get("red", 0) * dim * 255)
-                            g = int(vals.get("green", 0) * dim * 255)
-                            b = int(vals.get("blue", 0) * dim * 255)
-                        elif isinstance(vals, (list, tuple)):
-                            r, g, b = vals[0], vals[1], vals[2]
-                        preview_color = f"rgb({r}, {g}, {b})"
+            for i, scene in enumerate(bank["scenes"]):
+                color = _scene_color(scene)
 
-                #Szenenkarte mit Klickfunktionen
-                with ui.card().classes('w-40 h-32 relative cursor-pointer hover:scale-105 transition-transform border border-gray-600 p-0 overflow-hidden'):
-                    
-                    #Szene laden beim Draufklicken (grosser Klickbereich)
-                    with ui.element('div').classes('w-full h-full flex flex-col items-center justify-center p-2') \
-                        .style(f'background: linear-gradient(to top, {preview_color} 0%, #222 100%);') \
+                # Exec-Button (GrandMA Stil)
+                with ui.element('div').classes('exec-btn group').style('width:100px; height:72px; display:flex; flex-direction:column;') \
                         .on('click', lambda _, s=scene: load_scene(s)):
-                        
-                        ui.icon('touch_app', size='md').classes('text-white opacity-50 mb-1')
-                        ui.label(scene["name"]).classes('text-white font-bold text-center leading-tight shadow-black')
 
-                    #Löschen Button der Szenen
-                    with ui.button(icon='close') \
-                        .props('round flat dense color=white size=xs') \
-                        .style('position: absolute; top: 2px; right: 2px; opacity: 0.6; z-index: 10;') \
-                        .classes('hover:bg-red-600 hover:opacity-100') \
-                        .on('click.stop', lambda _, s=scene: delete_scene(s)): 
-                        pass
+                    # Farbstreifen oben
+                    ui.element('div').style(f'height:3px; background:{color}; width:100%; flex-shrink:0;')
+
+                    # Inhalt
+                    with ui.element('div').style('flex:1; padding:5px 6px; display:flex; flex-direction:column; justify-content:space-between; overflow:hidden;'):
+                        # Szenenname
+                        ui.label(scene["name"]) \
+                            .classes('text-[10px] font-bold text-gray-300 leading-tight') \
+                            .style('word-break:break-word; overflow:hidden; max-height:32px;') \
+                            .tooltip(scene["name"])
+
+                        # Fußzeile: Nummer + Löschen
+                        with ui.element('div').style('display:flex; justify-content:space-between; align-items:center;'):
+                            ui.label(f'{(i + 1):02d}') \
+                                .classes('font-mono text-[8px] text-[#2a2a3c]')
+
+                            ui.button(icon='close') \
+                                .props('flat round dense') \
+                                .classes('text-[#2a2a3c] hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity') \
+                                .style('width:14px; height:14px; font-size:8px;') \
+                                .on('click.stop', lambda _, s=scene: delete_scene(s))
 
     # Initialer Aufruf
     refresh_ui()

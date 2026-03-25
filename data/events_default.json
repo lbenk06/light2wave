@@ -227,5 +227,52 @@
             "speed": 8.0,
             "width": 0.2
         }
+    },
+    {
+        "name": "Linear Wave Cyan",
+        "type": "dynamic",
+        "roles": {
+            "red": 0.0,
+            "green": 1.0,
+            "blue": 1.0,
+            "dimmer": 1.0
+        },
+        "params": {
+            "generator": "linear_wave",
+            "target_role": "dimmer",
+            "speed": 3.0,
+            "width": 5.0
+        }
+    },
+    {
+        "name": "Radar Sweep",
+        "type": "dynamic",
+        "roles": {
+            "red": 0.0,
+            "green": 0.5,
+            "blue": 1.0,
+            "dimmer": 1.0
+        },
+        "params": {
+            "generator": "radar",
+            "target_role": "dimmer",
+            "speed": 1.5,
+            "width": 2.0
+        }
+    },
+    {
+        "name": "scanner warmweiss",
+        "type": "dynamic",
+        "roles": {
+            "red": 0.2,
+            "white": 1.0,
+            "dimmer": 1.0
+        },
+        "params": {
+            "generator": "scanner",
+            "target_role": "dimmer",
+            "speed": 2.0,
+            "width": 5.0
+        }
     }
 ]
