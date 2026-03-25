@@ -65,7 +65,7 @@ class CachedTrackDataset(Dataset):
                 sin = data['beat_phase_sin']
                 cos = data['beat_phase_cos']
                 bar = data['beat_in_bar'].astype(np.int64)
-                phrase = data['phrase_type'].astype(np.int64)
+                phrase = data['phase_type'].astype(np.int64)
 
                 n_frames = len(mel)
                 if n_frames < ctx + 1:
@@ -115,7 +115,7 @@ def collate_fn(batch):
             'beat_phase_sin': torch.stack(sin),
             'beat_phase_cos': torch.stack(cos),
             'beat_in_bar':    torch.stack(bar),
-            'phrase_type':    torch.stack(phrase),
+            'phase_type':    torch.stack(phrase),
         }
     )
 
@@ -297,7 +297,7 @@ def train(resume: bool = False):
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             torch.save(checkpoint, config.MODEL_SAVE_PATH)
-            print(f"  ✓ Bestes Modell gespeichert (Val-Loss: {val_loss:.4f})")
+            print(f"  [OK] Bestes Modell gespeichert (Val-Loss: {val_loss:.4f})")
 
         # Periodischer Checkpoint alle 10 Epochs
         if (epoch + 1) % 10 == 0:

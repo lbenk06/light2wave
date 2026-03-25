@@ -23,9 +23,9 @@ import numpy as np
 from tqdm import tqdm
 
 import config
-from utils.rekordbox_parser import parse_library, scan_phrases_from_stick
+from utils.rekordbox_parser import parse_library
 from utils.audio_features import load_audio, extract_mel
-from utils.label_utils import compute_labels, label_summary
+from utils.label_utils import compute_beat_labels, compute_phase_labels, phase_idx_to_name
 
 
 def build_cache(
@@ -43,28 +43,19 @@ def build_cache(
     print("  LIGHT2WAVE — Dataset Builder")
     print("=" * 60)
 
-    pioneer_folder = os.path.join(config.USB_DRIVE, "PIONEER")
-    if os.path.exists(pioneer_folder):
-        print(f"\n[Stick] {config.USB_DRIVE} erkannt — scanne Phrasen...")
-        scan_phrases_from_stick(config.USB_DRIVE)
-    else:
-        print(f"\n[Stick] WARN: Kein PIONEER-Ordner auf {config.USB_DRIVE} gefunden.")
-        print("         Phrasen-Daten werden nicht geladen.")
-
     # ── Tracks laden ─────────────────────────────────────────────────────────
-    print("\n[Parsing] Lese Rekordbox XML...")
+    print("\n[Parsing] Lese Rekordbox Datenbank...")
+    print("[Info] Phasen-Labels werden aus Audio via Librosa berechnet (BREAK/BUILDUP/DROP)")
     max_tracks = 20 if test_mode else None
     tracks = parse_library(
-        xml_path=config.XML_PATH,
-        require_audio=True,
         max_tracks=max_tracks,
         verbose=True,
     )
 
     if not tracks:
         print("\n[ERROR] Keine Tracks gefunden!")
-        print("  → Prüfe config.py: MAC_PATH_PREFIX und WINDOWS_PATH_PREFIX")
-        print("  → Stelle sicher dass die Audio-Dateien erreichbar sind")
+        print("  → Prüfe ob Rekordbox auf diesem PC installiert ist")
+        print("  → DB-Pfad: C:/Users/legol/AppData/Roaming/Pioneer/rekordbox/master.db")
         return
 
     # ── Verarbeitung ─────────────────────────────────────────────────────────
@@ -76,7 +67,6 @@ def build_cache(
         'skipped_cache': 0,
         'skipped_error': 0,
         'total_frames': 0,
-        'with_phrases': 0,
     }
 
     for track in tqdm(tracks, desc="Feature-Extraktion"):
@@ -95,25 +85,25 @@ def build_cache(
             mel = extract_mel(y)  # (n_frames, N_MELS)
             n_frames = len(mel)
 
-            # Labels
-            sin_phase, cos_phase, beat_in_bar, phrase_type = compute_labels(track, n_frames)
+            # Beat-Labels aus PQT2 Beat-Grid
+            sin_phase, cos_phase, beat_in_bar = compute_beat_labels(track.beat_times, n_frames)
+
+            # Phasen-Labels aus Librosa Audio-Analyse
+            phase_labels = compute_phase_labels(y, track.beat_times, n_frames)
 
             # Speichere als komprimiertes numpy
             np.savez_compressed(
                 cache_path,
-                mel=mel.astype(np.float16),          # Halbiert Speicher
+                mel=mel.astype(np.float16),
                 beat_phase_sin=sin_phase,
                 beat_phase_cos=cos_phase,
                 beat_in_bar=beat_in_bar.astype(np.uint8),
-                phrase_type=phrase_type.astype(np.uint8),
+                phase_type=phase_labels.astype(np.uint8),  # 0=BREAK, 1=BUILDUP, 2=DROP
                 bpm=np.float32(track.bpm),
-                has_phrases=np.bool_(track.has_phrases),
             )
 
             stats['processed'] += 1
             stats['total_frames'] += n_frames
-            if track.has_phrases:
-                stats['with_phrases'] += 1
 
         except Exception as e:
             tqdm.write(f"[WARN] {track.name[:40]}: {e}")
@@ -124,13 +114,12 @@ def build_cache(
     print("  BUILD ABGESCHLOSSEN")
     print("=" * 60)
     print(f"  Verarbeitet:          {stats['processed']}")
-    print(f"  Davon mit Phrasen:    {stats['with_phrases']}")
     print(f"  Bereits gecacht:      {stats['skipped_cache']}")
     print(f"  Fehler:               {stats['skipped_error']}")
     print(f"  Gesamt Frames:        {stats['total_frames']:,}")
     print(f"  Ungefähre Datenmenge: {stats['processed'] * 2:.0f} MB")
     print(f"\n  Cache unter: {config.CACHE_DIR}")
-    print("  → Jetzt trainer.py starten!")
+    print("  -> Jetzt trainer.py starten!")
 
 
 def verify_cache(n_samples: int = 5):
@@ -145,12 +134,15 @@ def verify_cache(n_samples: int = 5):
     for fname in cache_files[:n_samples]:
         data = np.load(os.path.join(config.CACHE_DIR, fname))
         mel = data['mel']
-        phrase_type = data['phrase_type']
+        phrase_type = data['phase_type']
         print(f"\n  {fname}:")
         print(f"    Mel-Shape:     {mel.shape}")
         print(f"    BPM:           {float(data['bpm']):.1f}")
-        print(f"    Hat Phrasen:   {bool(data['has_phrases'])}")
-        print(f"    Label-Verteilung: {label_summary(phrase_type)}")
+        from collections import Counter
+        c = Counter(int(x) for x in phrase_type)
+        total = len(phrase_type)
+        dist = {['BREAK','BUILDUP','DROP'][k]: f"{v/total*100:.0f}%" for k,v in sorted(c.items())}
+        print(f"    Phasen-Verteilung: {dist}")
 
 
 if __name__ == "__main__":

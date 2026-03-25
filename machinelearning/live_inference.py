@@ -36,7 +36,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 import config
 from model import load_model, BeatPhraseModel
 from utils.audio_features import RollingMelBuffer
-from utils.label_utils import decode_beat_phase, phrase_kind_to_name
+from utils.label_utils import decode_beat_phase, phase_idx_to_name
 
 try:
     import sounddevice as sd
@@ -165,10 +165,12 @@ class BeatDetector:
         beat_confidence = float(bar_probs.max().item())
 
         # Phrasen-Typ: argmax
-        phrase_logits = outputs['phrase_type'][0]
+        phrase_logits = outputs['phase_type'][0]
         phrase_probs = torch.softmax(phrase_logits, dim=0)
         phrase_type = int(torch.argmax(phrase_probs).item())
         phrase_confidence = float(phrase_probs.max().item())
+        # Direkt als light2wave-kompatibler String: "BREAK"/"BUILDUP"/"DROP"
+        phrase_name = phase_idx_to_name(phrase_type)
 
         # Beat-Detection: Phase springt von ~1.0 zurück auf ~0.0
         phase_delta = beat_phase - self._last_beat_phase
@@ -182,7 +184,7 @@ class BeatDetector:
             beat_phase=beat_phase,
             beat_in_bar=beat_in_bar,
             phrase_type=phrase_type,
-            phrase_name=phrase_kind_to_name(phrase_type),
+            phrase_name=phrase_name,
             beat_confidence=beat_confidence,
             phrase_confidence=phrase_confidence,
             is_beat=is_beat,

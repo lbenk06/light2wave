@@ -12,7 +12,7 @@ Architektur:
   Output-Köpfe:
     beat_phase   → 2 Werte (sin + cos der Phase)  Regression
     beat_in_bar  → 16 Klassen (Beat 1–16)          Klassifikation
-    phrase_type  → 10 Klassen (Intro, Chorus, ...)  Klassifikation
+    phase_type  → 10 Klassen (Intro, Chorus, ...)  Klassifikation
 
 Modell-Größe: ~500K Parameter → schnell auf CPU (<10ms Inferenz)
 """
@@ -86,7 +86,7 @@ class BeatPhraseModel(nn.Module):
     Output: dict mit:
       'beat_phase'  → (batch, 2)   [sin, cos]
       'beat_in_bar' → (batch, 16)  Logits
-      'phrase_type' → (batch, 10)  Logits
+      'phase_type' → (batch, 10)  Logits
     """
 
     def __init__(
@@ -94,7 +94,7 @@ class BeatPhraseModel(nn.Module):
         n_mels: int = config.N_MELS,
         context_frames: int = config.CONTEXT_FRAMES,
         num_beats_in_bar: int = config.NUM_BEATS_IN_BAR,
-        num_phrase_types: int = config.NUM_PHRASE_TYPES,
+        num_phase_types: int = config.NUM_PHASE_TYPES,
         channels: int = 64,
         n_blocks: int = 7,
         kernel_size: int = 3,
@@ -139,7 +139,7 @@ class BeatPhraseModel(nn.Module):
         self.beat_in_bar_head = nn.Linear(256, num_beats_in_bar)
 
         # Phrasen-Typ: Klassifikation 0-9
-        self.phrase_type_head = nn.Linear(256, num_phrase_types)
+        self.phase_type_head = nn.Linear(256, num_phase_types)
 
         self._init_weights()
 
@@ -159,7 +159,7 @@ class BeatPhraseModel(nn.Module):
             mel: (batch, N_MELS, CONTEXT_FRAMES)
 
         Returns:
-            dict mit 'beat_phase', 'beat_in_bar', 'phrase_type'
+            dict mit 'beat_phase', 'beat_in_bar', 'phase_type'
         """
         # (batch, N_MELS, T) → (batch, channels, T)
         x = self.input_proj(mel)
@@ -178,12 +178,12 @@ class BeatPhraseModel(nn.Module):
         # Outputs
         beat_phase = self.beat_phase_head(shared)      # (batch, 2) - keine Aktivierung!
         beat_in_bar = self.beat_in_bar_head(shared)    # (batch, 16) Logits
-        phrase_type = self.phrase_type_head(shared)    # (batch, 10) Logits
+        phase_type = self.phase_type_head(shared)    # (batch, 10) Logits
 
         return {
             'beat_phase': beat_phase,     # sin/cos, normiert nach Loss
             'beat_in_bar': beat_in_bar,   # Logits → CrossEntropy
-            'phrase_type': phrase_type,   # Logits → CrossEntropy
+            'phase_type': phase_type,   # Logits → CrossEntropy
         }
 
     @property
@@ -194,7 +194,7 @@ class BeatPhraseModel(nn.Module):
 class BeatPhraseLoss(nn.Module):
     """
     Multi-Task Loss:
-      L = w1 × CircularMSE(beat_phase) + w2 × CE(beat_in_bar) + w3 × CE(phrase_type)
+      L = w1 × CircularMSE(beat_phase) + w2 × CE(beat_in_bar) + w3 × CE(phase_type)
     """
     def __init__(
         self,
@@ -208,9 +208,8 @@ class BeatPhraseLoss(nn.Module):
         self.w_bar    = w_bar
         self.w_phrase = w_phrase
 
-        # Klassengewichte: "unknown" (Klasse 0) weniger gewichten
-        phrase_weights = torch.ones(config.NUM_PHRASE_TYPES)
-        phrase_weights[0] = phrase_weight_unknown
+        # Alle 3 Phasen gleichwertig (kein "unknown" mehr)
+        phrase_weights = torch.ones(config.NUM_PHASE_TYPES)
         self.register_buffer('phrase_weights', phrase_weights)
 
     def forward(self, outputs: dict, targets: dict) -> dict:
@@ -221,7 +220,7 @@ class BeatPhraseLoss(nn.Module):
                 'beat_phase_sin':  (batch,)
                 'beat_phase_cos':  (batch,)
                 'beat_in_bar':     (batch,) int64
-                'phrase_type':     (batch,) int64
+                'phase_type':     (batch,) int64
         Returns:
             dict mit 'loss' (gesamt) und Einzel-Losses für Logging
         """
@@ -236,8 +235,8 @@ class BeatPhraseLoss(nn.Module):
 
         # Phrasen-Typ: Cross-Entropy (mit Klassengewichten)
         loss_phrase = F.cross_entropy(
-            outputs['phrase_type'],
-            targets['phrase_type'],
+            outputs['phase_type'],
+            targets['phase_type'],
             weight=self.phrase_weights,
         )
 
@@ -288,7 +287,7 @@ if __name__ == "__main__":
         'beat_phase_sin': torch.randn(4),
         'beat_phase_cos': torch.randn(4),
         'beat_in_bar':    torch.randint(0, 16, (4,)),
-        'phrase_type':    torch.randint(0, 10, (4,)),
+        'phase_type':    torch.randint(0, 10, (4,)),
     }
     losses = loss_fn(out, targets)
     print(f"\nLosses: {losses}")

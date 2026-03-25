@@ -50,21 +50,14 @@ CONTEXT_FRAMES = 128         # ~3 Sekunden Kontext
 
 # ─── MODELL PARAMETER ─────────────────────────────────────────────────────────
 
-# Phrasen-Typen aus Pioneer PPHR Tag (kind → Name)
-PHRASE_KINDS = {
-    0:  "unknown",
-    1:  "intro",
-    2:  "up",        # aufbauend / Verse
-    3:  "down",      # abbauend
-    4:  "chorus",    # Höhepunkt
-    5:  "outro",
-    6:  "break",     # Fill-in / Break
-    7:  "verse",     # Variante Verse
-    8:  "bridge",
-    9:  "peak",      # alternative Chorus-Variante
-}
-NUM_PHRASE_TYPES = len(PHRASE_KINDS)  # 10 Klassen
-NUM_BEATS_IN_BAR = 16                 # 16-Beat Phrasen (typisch Electronic/House)
+# Phasen — direkt kompatibel mit light2wave live_audio_state["phase"]
+PHASE_NAMES = ["BREAK", "BUILDUP", "DROP"]
+PHASE_BREAK   = 0
+PHASE_BUILDUP = 1
+PHASE_DROP    = 2
+NUM_PHASE_TYPES = 3
+
+NUM_BEATS_IN_BAR = 4   # 4/4 Takt (Downbeat alle 4 Beats)
 
 # ─── TRAINING PARAMETER ───────────────────────────────────────────────────────
 
@@ -73,7 +66,7 @@ LEARNING_RATE = 3e-4
 NUM_EPOCHS = 50
 SONGS_PER_MINI_EPOCH = 200      # Wie viele Songs pro Mini-Epoch geladen werden
 VALIDATION_SPLIT = 0.1          # 10% der Songs als Validierung
-NUM_WORKERS = 4                 # DataLoader Worker (0 auf Windows falls Probleme)
+NUM_WORKERS = 0                 # 0 auf Windows (Multiprocessing-Bug mit PyTorch)
 
 # ─── LIVE INFERENZ PARAMETER ──────────────────────────────────────────────────
 
