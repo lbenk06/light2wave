@@ -23,18 +23,16 @@ def create():
             status_led = ui.element('div').style('width: 20px; height: 20px; border-radius: 50%; background-color: #ff0000; transition: all 0.3s;')
 
             def handle_connect():
-                # Wir rufen jetzt unseren neuen Manager auf!
                 if state.dmx_interface.controller:
-                    # Wenn schon verbunden -> Trennen
                     state.dmx_interface.disconnect()
                     ui.notify("Getrennt", color='warning')
                     status_led.style('background-color: #ff0000; box-shadow: none;')
                     connect_btn.text = "VERBINDEN"
                     connect_btn.props('color=green icon=link')
                 else:
-                    # Verbinden
                     success = state.dmx_interface.connect(port_select.value)
                     if success:
+                        state.dmx_port = port_select.value   # Im Projekt merken
                         ui.notify(f"Verbunden mit {port_select.value}!", color='positive')
                         status_led.style('background-color: #00ff00; box-shadow: 0 0 15px #00ff00;')
                         connect_btn.text = "TRENNEN"

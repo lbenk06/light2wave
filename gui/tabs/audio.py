@@ -29,13 +29,30 @@ play_settings = {
         "DROP": []
     },
     "custom_step_idx": 0,     # zählt die schritte (beats) mit
-    "last_active_item": None  # merkt sich den einen effekt, der gerade läuft
+    "last_active_item": None, # merkt sich den einen effekt, der gerade läuft
+    "is_active": False,       # Audio-Modus an/aus (Live-Tab hat Prio wenn False)
 }
 
 def create():
     # Header
     with ui.row().classes('w-full items-center justify-between mb-3'):
         ui.label('SOUND TO LIGHT').classes('text-white font-black text-lg tracking-widest')
+
+        def toggle_audio_mode():
+            play_settings["is_active"] = not play_settings["is_active"]
+            if play_settings["is_active"]:
+                audio_toggle_btn.props('color=cyan').set_text('AUDIO MODE: AN')
+            else:
+                audio_toggle_btn.props('color=grey').set_text('AUDIO MODE: AUS')
+                # Alle audio-gesteuerten Events stoppen wenn Audio-Modus aus
+                from gui.state import state as _state
+                for ev in _state.events:
+                    if ev.active and ev.type != "flash":
+                        ev.stop(_state.engine)
+
+        audio_toggle_btn = ui.button('AUDIO MODE: AUS', on_click=toggle_audio_mode) \
+            .props('color=grey push') \
+            .classes('font-black tracking-widest h-10')
 
     # Audio-Quellschalter — Hardware-Button-Stil
     with ui.element('div').classes('w-full mb-4 border border-[#1e1e28] bg-[#0f0f14] rounded-sm p-3'):
@@ -344,6 +361,13 @@ def create():
 
             # licht trigger funktion (wird von mp3 und live modus geteilt)
             def trigger_lights(beat_in_bar, phase):
+                if not play_settings["is_active"]:
+                    return
+                # Wenn ein Flash/Blinder gerade aktiv ist, Scene-Sync überspringen
+                # damit der Blinder nicht durch eine neue Szene übersch rieben wird
+                flash_running = any(e.active for e in state.events if e.type == "flash")
+                if flash_running:
+                    return
                 
                 # modus 1 scene sync (szenen wechseln auf den beat)
                 if play_settings["mode"] == "Scene Sync" and play_settings["selected_bank"]:
@@ -428,6 +452,8 @@ def create():
 
             # ticker und lichttrigger (100 mal pro sekunde)
             def audio_ticker():
+                if not play_settings["is_active"]:
+                    return
                 if play_settings["source_mode"] == "MP3":
                     elapsed_time = get_current_time()
                     if elapsed_time == 0.0: return
@@ -512,11 +538,17 @@ def create():
 
             def magic_auto_ticker():
                 """Kontinuierlicher 100 Hz Update fuer Magic Auto (smooth fading, strobe, effekte)."""
+                if not play_settings["is_active"]:
+                    return
                 if play_settings["mode"] != "Magic Auto":
                     return
                 if play_settings["source_mode"] == "MP3":
+                    if not audio_state.get("is_playing", False):
+                        return
                     phase = audio_state.get("last_state", "DROP")
                 else:
+                    if not live_audio_state["is_listening"]:
+                        return
                     phase = live_audio_state.get("phase", "DROP")
                 magic_apply(state.engine, phase)
 

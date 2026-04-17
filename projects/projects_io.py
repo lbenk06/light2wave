@@ -2,10 +2,9 @@ import json
 from fixtures.fixture import Fixture
 from fixtures.profiles import ALL_PROFILES
 
-def save_project(engine, filename):
+def save_project(engine, filename, events=None, dmx_port=None):
     """
-    Speichert das Projekt. 
-    Wichtig: Wir speichern nur die ID des Profils, nicht das ganze Dictionary.
+    Speichert das gesamte Projekt inkl. Traverses, Fixtures, Szenen, Events und DMX-Port.
     """
     project_dict = {
         "traverses": [
@@ -13,7 +12,9 @@ def save_project(engine, filename):
             for t in engine.traverses
         ],
         "fixtures": [],
-        "banks":getattr(engine, "banks", [])  # Falls es noch keine gibt leer
+        "banks": getattr(engine, "banks", []),
+        "events": [e.data for e in (events or [])],
+        "dmx_port": dmx_port or "",
     }
 
     for f in engine.fixtures:
@@ -110,9 +111,25 @@ def load_fixtures_from_json(fixture_list_data, engine):
 def load_banks_from_json(bank_list_data, engine):
     """Lädt die Banks und Szenen aus der JSON"""
     if bank_list_data is None:
-        bank_list_data=[]
-        
-    #in die engine laden
-    engine.banks=bank_list_data
-
+        bank_list_data = []
+    engine.banks = bank_list_data
     print(f"{len(engine.banks)} Banks erfolgreich geladen.")
+
+
+def load_events_from_project(event_list_data):
+    """Erstellt Event-Objekte aus den im Projekt gespeicherten Rohdaten."""
+    from engine.events import Event
+    if not event_list_data:
+        return []
+    return [Event(e["name"], e) for e in event_list_data]
+
+
+def list_projects(folder="projects"):
+    """Gibt alle .json Projektdateien im projects-Ordner zurück (ohne user_profiles.json)."""
+    import os
+    if not os.path.exists(folder):
+        return []
+    return sorted([
+        f for f in os.listdir(folder)
+        if f.endswith(".json") and f != "user_profiles.json"
+    ])

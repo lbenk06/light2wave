@@ -137,6 +137,8 @@ class Event:
                 #auto stopp wenn der flash effekt durch ist (kein weiß clash mehr-->engine wieder frei für andere events)
                 attack_duration = 0.1 / max(0.1, speed)
                 if self.type=="flash" and t > attack_duration and max_val<0.01:
+                    for f in target_fixtures:
+                        f.set(target_role, 0.0)
                     self.stop(engine)
 
 

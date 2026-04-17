@@ -1,6 +1,7 @@
 from nicegui import ui
 from gui.state import state
 from gui.tabs import live, audio, fixtures, traverse, scenes, dmx, event
+from projects.projects_io import list_projects
 import base64
 from pathlib import Path
 
@@ -180,7 +181,96 @@ def create_app():
         with ui.element('div').style('width: 1px; height: 16px; background: #334155; margin: 0 8px;'):
             pass
         ui.label('Professional Light Control System').classes('text-gray-500 text-xs tracking-widest')
+
         ui.element('div').style('flex: 1;')
+
+        # --- Projekt-Manager ---
+        project_name_label = ui.label(f'📁 {state.project_name}').classes(
+            'text-xs font-black tracking-widest text-amber-400'
+        ).style('cursor:default;')
+
+        def refresh_project_label():
+            project_name_label.set_text(f'📁 {state.project_name}')
+
+        def do_save():
+            state.save_current_project()
+            ui.notify(f'Gespeichert: {state.project_name}', color='positive', position='top')
+            refresh_project_label()
+
+        def open_save_as():
+            with ui.dialog() as dlg, ui.card().classes('bg-gray-900 border border-gray-700 p-6 gap-4').style('min-width:360px'):
+                ui.label('PROJEKT SPEICHERN ALS').classes('text-xs font-black tracking-widest text-amber-400')
+                name_input = ui.input(label='Projektname', value=state.project_name) \
+                    .props('dark standout color=amber').classes('w-full')
+                with ui.row().classes('w-full justify-end gap-2 mt-2'):
+                    ui.button('Abbrechen', on_click=dlg.close).props('flat color=grey')
+                    def confirm_save_as():
+                        n = name_input.value.strip()
+                        if not n:
+                            ui.notify('Bitte einen Namen eingeben!', color='negative')
+                            return
+                        state.save_project_as(f'projects/{n}.json')
+                        ui.notify(f'Gespeichert als: {n}', color='positive', position='top')
+                        refresh_project_label()
+                        dlg.close()
+                    ui.button('SPEICHERN', on_click=confirm_save_as).props('push color=amber')
+            dlg.open()
+
+        def open_load():
+            with ui.dialog() as dlg, ui.card().classes('bg-gray-900 border border-gray-700 p-6 gap-4').style('min-width:360px'):
+                ui.label('PROJEKT LADEN').classes('text-xs font-black tracking-widest text-cyan-400')
+                projects = list_projects()
+                if not projects:
+                    ui.label('Keine Projekte gefunden.').classes('text-gray-500 text-sm')
+                else:
+                    selected = {'file': projects[0]}
+                    sel = ui.select(projects, value=projects[0], label='Projekt wählen') \
+                        .props('dark standout color=cyan').classes('w-full')
+                    sel.bind_value_to(selected, 'file')
+                with ui.row().classes('w-full justify-end gap-2 mt-2'):
+                    ui.button('Abbrechen', on_click=dlg.close).props('flat color=grey')
+                    def confirm_load():
+                        state.load_project_file(f'projects/{selected["file"]}')
+                        ui.notify(f'Geladen: {selected["file"]}', color='positive', position='top')
+                        refresh_project_label()
+                        dlg.close()
+                    ui.button('LADEN', on_click=confirm_load).props('push color=cyan') if projects else None
+            dlg.open()
+
+        def open_new():
+            with ui.dialog() as dlg, ui.card().classes('bg-gray-900 border border-gray-700 p-6 gap-4').style('min-width:360px'):
+                ui.label('NEUES PROJEKT').classes('text-xs font-black tracking-widest text-green-400')
+                ui.label('Alle nicht gespeicherten Änderungen gehen verloren.') \
+                    .classes('text-xs text-gray-500')
+                name_input = ui.input(label='Projektname', value='Mein Projekt') \
+                    .props('dark standout color=green').classes('w-full')
+                with ui.row().classes('w-full justify-end gap-2 mt-2'):
+                    ui.button('Abbrechen', on_click=dlg.close).props('flat color=grey')
+                    def confirm_new():
+                        n = name_input.value.strip()
+                        if not n:
+                            ui.notify('Bitte einen Namen eingeben!', color='negative')
+                            return
+                        state.new_project(n)
+                        ui.notify(f'Neues Projekt: {n}', color='positive', position='top')
+                        refresh_project_label()
+                        dlg.close()
+                    ui.button('ERSTELLEN', on_click=confirm_new).props('push color=green')
+            dlg.open()
+
+        with ui.row().classes('items-center gap-1'):
+            ui.button('NEU', on_click=open_new) \
+                .props('flat dense color=green').classes('text-[10px] font-black tracking-widest')
+            ui.button('LADEN', on_click=open_load) \
+                .props('flat dense color=cyan').classes('text-[10px] font-black tracking-widest')
+            ui.button('SPEICHERN', on_click=do_save) \
+                .props('push dense color=amber').classes('text-[10px] font-black tracking-widest')
+            ui.button('SPEICHERN ALS', on_click=open_save_as) \
+                .props('flat dense color=amber').classes('text-[10px] font-black tracking-widest')
+
+        with ui.element('div').style('width: 1px; height: 20px; background: #334155; margin: 0 4px;'):
+            pass
+
         ui.element('img') \
             .props(f'src="data:image/png;base64,{_LOGO_B64}"') \
             .style('height:56px; width:auto; border-radius:3px;')
