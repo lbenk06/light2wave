@@ -88,12 +88,43 @@ LASERWORLD_EL230_9CH = {
             (0,  10,  "Mitte (Zentrum)"),
             (11, 255, "Y-Positionierung"),
         ],
-        "pattern":       [(0, 255, "Muster 0–255 → verschiedene Laser-Muster")],
-        "speed":         [(0, 255, "Scan-Geschwindigkeit (0=langsam, 255=schnell)")],
-        "laser_speed":   [(0, 255, "Dynamik-Speed (nur bei Dynamisch DMX aktiv)")],
-        "zoom":          [(0, 255, "Zoom / Mustergröße (0=klein, 255=groß)")],
-        "laser_color":   [(0, 255, "Farbe (0=Rot, ~85=Grün, ~170=Blau, 255=Weiß/Mix)")],
-        "color_segment": [(0, 255, "Farb-Segment / Farbbereich-Aufteilung")],
+        # Pattern: 32 Muster gleichmässig über 0-255 verteilt (je ~8 DMX-Werte)
+        "pattern": [(i * 8, min(i * 8 + 7, 255), f"Muster {i + 1} / 32")
+                    for i in range(32)],
+        "speed": [
+            (0,   63,  "Scan-Speed: langsam"),
+            (64,  127, "Scan-Speed: mittel"),
+            (128, 191, "Scan-Speed: schnell"),
+            (192, 255, "Scan-Speed: sehr schnell"),
+        ],
+        "laser_speed": [
+            (0,   63,  "Dynamik-Speed: langsam (nur Dynamisch DMX)"),
+            (64,  127, "Dynamik-Speed: mittel"),
+            (128, 191, "Dynamik-Speed: schnell"),
+            (192, 255, "Dynamik-Speed: sehr schnell"),
+        ],
+        "zoom": [
+            (0,   63,  "Zoom: klein"),
+            (64,  127, "Zoom: mittel"),
+            (128, 191, "Zoom: gross"),
+            (192, 255, "Zoom: sehr gross"),
+        ],
+        # Farb-Zyklus (Naeherung — exakte Werte am Geraet testen)
+        "laser_color": [
+            (0,   35,  "Farbe: Rot"),
+            (36,  71,  "Farbe: Gruen"),
+            (72,  107, "Farbe: Blau"),
+            (108, 143, "Farbe: Gelb (R+G)"),
+            (144, 179, "Farbe: Cyan (G+B)"),
+            (180, 215, "Farbe: Magenta (R+B)"),
+            (216, 255, "Farbe: Weiss / Mix"),
+        ],
+        "color_segment": [
+            (0,   63,  "Farb-Segment: 1 Farbe"),
+            (64,  127, "Farb-Segment: 2 Farben"),
+            (128, 191, "Farb-Segment: 3 Farben"),
+            (192, 255, "Farb-Segment: Voll-Mix"),
+        ],
     }
 }
 
