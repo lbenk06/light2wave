@@ -17,6 +17,11 @@ class Fixture:
             role=channel["role"]
             if role != "unused":
                 self.values[role]=0.0
+
+        # Laser: Modus-Kanal auf "Statisch DMX" vorsetzen (Wert 175/255 ≈ 0.686)
+        # Ohne das ignoriert der Laser alle DMX-Befehle (Wert < 150 = Laser aus)
+        if "laser_mode" in self.values:
+            self.values["laser_mode"] = 175 / 255.0
     
     def set(self, role, value):
         if role in self.values:

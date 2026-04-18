@@ -76,29 +76,59 @@ def create():
                     ui.separator().classes('mb-2')
 
                     # Slider für jeden Kanal
+                    hints = fixture.profile.get("hints", {})
                     for channel in fixture.profile["channels"]:
                         role = channel["role"]
                         if role == "unused": continue
 
-                        # Farben für Slider bestimmen
                         c_map = {
-                            'red': 'red', 'green': 'green', 'blue': 'blue', 
-                            'white': 'grey-4', 'dimmer': 'orange', 'strobe': 'grey'
+                            'red': 'red', 'green': 'green', 'blue': 'blue',
+                            'white': 'grey-4', 'dimmer': 'orange', 'strobe': 'grey',
+                            'laser_mode': 'deep-orange', 'pattern': 'purple',
+                            'x_pos': 'cyan', 'y_pos': 'cyan',
+                            'laser_speed': 'teal', 'zoom': 'light-blue',
+                            'laser_color': 'pink', 'color_segment': 'pink',
                         }
                         slider_color = c_map.get(role, 'primary')
 
-                        # Slider UI (Label + Slider 0-255)
-                        with ui.column().classes('w-full gap-0 mb-1'):
-                            ui.label(role).classes('text-xs text-grey-6 uppercase font-bold tracking-wider')
-                            
-                            current_val_255 = int(fixture.get(role) * 255)
-                            
-                            ui.slider(
-                                min=0, max=255, step=1,
-                                value=current_val_255,
-                                # Umrechnung 0-255 zurück auf 0.0-1.0 für die Engine
-                                on_change=lambda e, f=fixture, r=role: f.set(r, e.value / 255.0)
-                            ).props(f'color={slider_color} label').classes('w-full')
+                        current_val_255 = int(fixture.get(role) * 255)
+
+                        def get_hint_label(dmx_val, role_hints):
+                            for lo, hi, label in role_hints:
+                                if lo <= dmx_val <= hi:
+                                    return label
+                            return ""
+
+                        with ui.column().classes('w-full gap-0 mb-2'):
+                            with ui.row().classes('w-full justify-between items-center'):
+                                ui.label(channel["name"]).classes(
+                                    'text-xs uppercase font-bold tracking-wider'
+                                ).style('color:#6b7280')
+                                ui.label(f'DMX {current_val_255}').classes(
+                                    'text-xs font-mono'
+                                ).style('color:#374151').bind_text_from(
+                                    fixture.values, role,
+                                    backward=lambda v: f'DMX {int(v*255)}'
+                                )
+
+                            def make_slider(fix, r, color, role_hints):
+                                hint_label = ui.label(
+                                    get_hint_label(int(fix.get(r) * 255), role_hints)
+                                ).classes('text-[10px] font-black tracking-wide').style(
+                                    'color:#f97316; min-height:14px;'
+                                )
+
+                                def on_change(e, f=fix, ro=r, hl=hint_label, rh=role_hints):
+                                    f.set(ro, e.value / 255.0)
+                                    hl.set_text(get_hint_label(int(e.value), rh))
+
+                                ui.slider(
+                                    min=0, max=255, step=1,
+                                    value=int(fix.get(r) * 255),
+                                    on_change=on_change,
+                                ).props(f'color={color} label').classes('w-full')
+
+                            make_slider(fixture, role, slider_color, hints.get(role, []))
 
     # Beim ersten Laden der Seite einmal ausführen
     update_ui()
@@ -126,7 +156,9 @@ def create():
                     ui.label(f"CH {i+1:02d}").classes('font-mono text-[10px] text-cyan-600 font-black w-10')
 
                     ui.select(
-                        options=['dimmer', 'red', 'green', 'blue', 'white', 'strobe', 'pan', 'tilt', 'speed', 'unused'],
+                        options=['dimmer', 'red', 'green', 'blue', 'white', 'strobe', 'pan', 'tilt', 'speed',
+                                 'laser_mode', 'pattern', 'x_pos', 'y_pos', 'laser_speed', 'zoom', 'laser_color', 'color_segment',
+                                 'unused'],
                         value=ch['role'],
                         on_change=lambda e, idx=i: update_channel_role(idx, e.value)
                     ).props('dark standout dense color=cyan').classes('w-40')
