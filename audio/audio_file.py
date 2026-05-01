@@ -1,6 +1,7 @@
 import numpy as np
 import librosa
 import threading
+import time
 import pygame
 
 # pygame mixer initialisieren
@@ -20,6 +21,8 @@ audio_state = {
     "beat_offset": 0,
     "magic_mode": True
 }
+
+_play_start_time: float = 0.0   # time.time() beim letzten play()
 
 def analyze_audio_background(file_path, on_success, on_error):
     """Läuft im Hintergrund und ruft am Ende die Callbacks auf"""
@@ -73,18 +76,26 @@ def analyze_audio_background(file_path, on_success, on_error):
 
 def toggle_playback():
     """Startet oder stoppt den Song"""
+    global _play_start_time
     if not audio_state["is_playing"]:
         audio_state["current_beat_idx"] = 0
         audio_state["current_frame_idx"] = 0
         audio_state["last_state"] = None
         pygame.mixer.music.play()
+        _play_start_time = time.time()
         audio_state["is_playing"] = True
     else:
         pygame.mixer.music.stop()
         audio_state["is_playing"] = False
 
-def get_current_time():
-    """Gibt die aktuelle Song Position in Sekunden zurück"""
-    if not audio_state["is_playing"] or not pygame.mixer.music.get_busy():
+def get_current_time() -> float:
+    """Gibt die aktuelle Song-Position in Sekunden zurück.
+    Nutzt time.time() — zuverlässiger als pygame.get_pos() auf Windows."""
+    if not audio_state["is_playing"]:
         return 0.0
-    return pygame.mixer.music.get_pos() / 1000.0
+    elapsed = time.time() - _play_start_time
+    # Song-Ende erkennen: erst nach >2s messen (get_busy hat Anlauf-Delay)
+    if elapsed > 2.0 and not pygame.mixer.music.get_busy():
+        audio_state["is_playing"] = False
+        return 0.0
+    return elapsed

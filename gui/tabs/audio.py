@@ -14,7 +14,7 @@ from audio.audio_file import audio_state, analyze_audio_background, toggle_playb
 from audio.audio_live import live_audio_state, get_input_devices, start_listening, stop_listening
 
 # magic auto modus
-from engine.magic_auto import magic_auto_state, on_beat as magic_on_beat, apply as magic_apply, EFFECT_OPTIONS
+from engine.magic_auto import magic_auto_state, on_beat as magic_on_beat, on_transient as magic_on_transient, apply as magic_apply, EFFECT_OPTIONS
 
 # lokaler state für die gui-steuerung
 play_settings = {
@@ -22,7 +22,16 @@ play_settings = {
     "mode": "Scene Sync",  # 'Scene Sync', 'Custom Timeline'
     "selected_bank": None,
     "current_scene_idx": 0,
-    "flash_automatik": True,  # flash automatik als zusätzlich auswählbares overlay
+    "flash_automatik":        True,        # flash automatik overlay
+    "flash_drop_mode":        "interval",  # "interval" | "on_enter"
+    "flash_drop_interval":    1,           # alle N Beats im Drop
+    "flash_buildup_mode":     "off",       # "off" | "interval" | "on_enter"
+    "flash_buildup_interval": 4,
+    "flash_break_mode":       "off",       # "off" | "interval" | "on_enter"
+    "flash_break_interval":   8,
+    "_flash_drop_count":      0,
+    "_flash_buildup_count":   0,
+    "_flash_break_count":     0,
     "custom_timeline": {      # speichert die auswahl für die phasen (als listen für mehrfachauswahl)
         "BREAK": [],
         "BUILDUP": [],
@@ -266,14 +275,41 @@ def create():
                     ui.label('Helligkeit').classes('text-gray-300 text-xs self-center')
                     ui.slider(min=0, max=1, step=0.01).bind_value(magic_auto_state, 'brightness').props('dark color=yellow label-always')
 
-                    ui.label('Beat-Blinder').classes('text-gray-300 text-xs self-center')
-                    ui.slider(min=0, max=1, step=0.01).bind_value(magic_auto_state, 'blinder_strength').props('dark color=orange label-always')
-
                     ui.label('Abklingen').classes('text-gray-300 text-xs self-center')
                     ui.slider(min=0, max=1, step=0.01).bind_value(magic_auto_state, 'fade').props('dark color=purple label-always').tooltip('0 = Blinder-Flash sofort weg, 1 = langes Nachleuchten')
 
                     ui.label('Strobe').classes('text-gray-300 text-xs self-center')
                     ui.slider(min=0, max=1, step=0.01).bind_value(magic_auto_state, 'strobe_amount').props('dark color=white label-always')
+
+                # --- BEAT BLINDER ---
+                ui.label('BEAT BLINDER').classes('text-xs text-gray-400 font-bold mt-2')
+                with ui.column().classes('w-full bg-gray-900 p-2 rounded border border-orange-900 gap-2'):
+                    with ui.grid(columns=2).classes('w-full gap-x-4 gap-y-0'):
+                        ui.label('Stärke').classes('text-gray-300 text-xs self-center')
+                        ui.slider(min=0, max=1, step=0.01).bind_value(magic_auto_state, 'blinder_strength').props('dark color=orange label-always')
+
+                        ui.label('Alle N Beats').classes('text-gray-300 text-xs self-center')
+                        ui.select(
+                            options={1: 'jeden Beat', 2: '2 Beats', 4: '4 Beats', 8: '8 Beats'},
+                            value=1,
+                        ).bind_value(magic_auto_state, 'blinder_every') \
+                         .props('dark standout dense color=orange')
+
+                    ui.label('Aktiv in Phase:').classes('text-gray-400 text-[10px] mt-1')
+                    with ui.row().classes('gap-3'):
+                        def _make_phase_cb(ph, label, color):
+                            def toggle(e, p=ph):
+                                phases = list(magic_auto_state.get('blinder_phases', []))
+                                if e.value and p not in phases:
+                                    phases.append(p)
+                                elif not e.value and p in phases:
+                                    phases.remove(p)
+                                magic_auto_state['blinder_phases'] = phases
+                            ui.checkbox(label, value=ph in magic_auto_state.get('blinder_phases', ['DROP']),
+                                        on_change=toggle).props(f'dense color={color}').classes('text-xs')
+                        _make_phase_cb('DROP',    'DROP',    'red')
+                        _make_phase_cb('BUILDUP', 'BUILDUP', 'orange')
+                        _make_phase_cb('BREAK',   'BREAK',   'blue')
 
                 # --- UEBERBLEND ---
                 ui.label('UEBERBLEND').classes('text-xs text-gray-400 font-bold mt-2')
@@ -311,6 +347,78 @@ def create():
                 ui.separator().classes('bg-gray-600')
                 ui.checkbox('Phasen-Reaktion (BREAK / BUILDUP / DROP)', value=True).bind_value(magic_auto_state, 'phase_react').classes('text-gray-300 text-xs')
 
+                # --- LASER AUTOMATIK ---
+                ui.label('LASER AUTOMATIK').classes('text-xs text-gray-400 font-bold mt-2')
+                with ui.column().classes('w-full bg-gray-900 p-2 rounded border border-red-900 gap-1'):
+                    ui.checkbox('Laser-Automation aktiv', value=True) \
+                        .bind_value(magic_auto_state, 'laser_auto').classes('text-red-300 text-xs font-bold')
+
+                    with ui.column().classes('w-full gap-1').bind_visibility_from(magic_auto_state, 'laser_auto'):
+                        ui.checkbox('Zufälliges Muster (on beat / on drop)', value=True) \
+                            .bind_value(magic_auto_state, 'laser_random_pattern').classes('text-gray-200 text-xs')
+                        ui.checkbox('Farbe an Palette koppeln', value=True) \
+                            .bind_value(magic_auto_state, 'laser_color_sync').classes('text-gray-200 text-xs')
+                        ui.checkbox('Speed + Zoom nach Phase', value=True) \
+                            .bind_value(magic_auto_state, 'laser_speed_react').classes('text-gray-200 text-xs')
+
+                        with ui.row().classes('w-full items-center gap-2 mt-1'):
+                            ui.label('DMX Modus:').classes('text-gray-400 text-xs whitespace-nowrap')
+                            ui.radio(
+                                options={"dynamic": "Dynamisch (animiert)", "static": "Statisch DMX"},
+                                value="dynamic",
+                            ).bind_value(magic_auto_state, 'laser_dmx_mode') \
+                             .props('inline dark color=red').classes('text-xs')
+
+                        with ui.row().classes('w-full items-center gap-2 mt-1') \
+                                .bind_visibility_from(magic_auto_state, 'laser_random_pattern'):
+                            ui.label('Muster-Wechsel:').classes('text-gray-400 text-xs whitespace-nowrap')
+                            ui.select(
+                                options={0.5: '½ Beat', 1: '1 Beat', 2: '2 Beats', 4: '4 Beats', 8: '8 Beats'},
+                                value=2,
+                            ).bind_value(magic_auto_state, 'laser_pattern_beats') \
+                             .props('dark standout dense color=red').classes('w-32')
+
+                # --- BLINDER KONFIGURATION ---
+                ui.label('BLINDER GERÄTE').classes('text-xs text-gray-400 font-bold mt-2')
+                with ui.column().classes('w-full bg-gray-900 p-2 rounded border border-orange-900 gap-2'):
+                    ui.label('Welche Geräte als Blinder (leer = alle):') \
+                        .classes('text-orange-300 text-[10px]')
+
+                    fixture_ids = [f.id for f in state.engine.fixtures]
+                    blinder_select = ui.select(
+                        options=fixture_ids,
+                        multiple=True,
+                        value=magic_auto_state.get("blinder_fixture_ids", []),
+                        label='Blinder Geräte',
+                    ).props('dark standout dense color=orange use-chips').classes('w-full')
+
+                    def on_blinder_fixtures_change(e):
+                        magic_auto_state["blinder_fixture_ids"] = list(e.value or [])
+                    blinder_select.on_value_change(on_blinder_fixtures_change)
+
+                    ui.label('Blinder-Farbe:').classes('text-orange-300 text-[10px]')
+                    ui.radio(
+                        options={"white": "Weiss (voll)", "palette": "Palettenfarbe"},
+                        value=magic_auto_state.get("blinder_color", "white"),
+                    ).bind_value(magic_auto_state, "blinder_color") \
+                     .props('inline dark color=orange').classes('text-xs')
+
+                # --- INTELLIGENTE AUTOMATIK ---
+                ui.label('INTELLIGENTE AUTOMATIK').classes('text-xs text-gray-400 font-bold mt-2')
+                with ui.column().classes('w-full bg-gray-900 p-2 rounded border border-cyan-900 gap-0'):
+                    ui.checkbox('Synth-Blinder (Hochton-Spike → Flash im Buildup/Drop)', value=True) \
+                        .bind_value(magic_auto_state, 'synth_blinder').classes('text-cyan-300 text-xs') \
+                        .tooltip('Erkennt Synth-/Hi-Hat-Einsetzen (1-8 kHz) und löst einen Blinder aus')
+                    ui.checkbox('Smart Flash (nur bei Drop-Übergang oder hoher Energie)', value=True) \
+                        .bind_value(magic_auto_state, 'smart_flash').classes('text-cyan-300 text-xs') \
+                        .tooltip('Ersetzt zufällige Flash-Automatik durch musik-intelligentes Timing')
+                    ui.checkbox('Energy Brightness (Lautstärke steuert Helligkeit)', value=True) \
+                        .bind_value(magic_auto_state, 'energy_brightness').classes('text-cyan-300 text-xs') \
+                        .tooltip('Break = dunkel, Buildup = mittel, Drop = voll hell')
+                    ui.checkbox('Drop Instant (sofortiger Vollblinder beim ersten Drop-Beat)', value=True) \
+                        .bind_value(magic_auto_state, 'drop_instant').classes('text-cyan-300 text-xs') \
+                        .tooltip('Zündet beim ersten Beat nach Phasenwechsel zu DROP einen vollen Blinder')
+
                 # Timer fuer Farbvorschau-Update
                 def update_color_preview():
                     palette_name = magic_auto_state['color_palette']
@@ -336,7 +444,38 @@ def create():
 
             # overlay flash- automatik
             ui.separator().classes('bg-gray-700 my-2')
-            ui.checkbox('Flash Automatik zuschalten (Magic Mode)', value=True).bind_value(play_settings, 'flash_automatik').bind_visibility_from(play_settings, 'mode', lambda m: m != 'Magic Auto').classes('mb-4 text-yellow-400 font-bold')
+            with ui.column().classes('w-full gap-2 mb-4').bind_visibility_from(play_settings, 'mode', lambda m: m != 'Magic Auto'):
+                ui.checkbox('Flash Automatik zuschalten', value=True) \
+                    .bind_value(play_settings, 'flash_automatik') \
+                    .classes('text-yellow-400 font-bold')
+
+                with ui.column().classes('w-full bg-gray-800 p-2 rounded border border-yellow-900 gap-3') \
+                        .bind_visibility_from(play_settings, 'flash_automatik'):
+
+                    interval_opts = {1: '1 Beat', 2: '2 Beats', 4: '4 Beats', 8: '8 Beats', 16: '16 Beats'}
+                    mode_opts     = {'off': 'Aus', 'on_enter': 'Bei Eintritt', 'interval': 'Intervall'}
+
+                    for ph_label, ph_color, mode_key, iv_key, iv_color in [
+                        ('DROP',    'text-red-400',    'flash_drop_mode',    'flash_drop_interval',    'red'),
+                        ('BUILDUP', 'text-orange-400', 'flash_buildup_mode', 'flash_buildup_interval', 'orange'),
+                        ('BREAK',   'text-blue-400',   'flash_break_mode',   'flash_break_interval',   'blue'),
+                    ]:
+                        with ui.row().classes('w-full items-center gap-2'):
+                            ui.label(ph_label).classes(f'{ph_color} font-black text-xs w-16')
+                            ui.select(
+                                options=mode_opts,
+                                value=play_settings.get(mode_key, 'off'),
+                            ).bind_value(play_settings, mode_key) \
+                             .props(f'dark standout dense color={iv_color}').classes('w-28')
+
+                            iv_row = ui.row().classes('items-center gap-1')
+                            with iv_row:
+                                ui.select(
+                                    options=interval_opts,
+                                    value=play_settings.get(iv_key, 1),
+                                ).bind_value(play_settings, iv_key) \
+                                 .props(f'dark standout dense color={iv_color}').classes('w-28') \
+                                 .bind_visibility_from(play_settings, mode_key, lambda v: v == 'interval')
 
             # takt korrektur (nur bei mp3)
             with ui.row().classes('gap-4 mb-6').bind_visibility_from(play_settings, 'source_mode', lambda m: m == 'MP3'):
@@ -363,8 +502,14 @@ def create():
             def trigger_lights(beat_in_bar, phase):
                 if not play_settings["is_active"]:
                     return
+
+                # Magic Auto läuft immer durch — Flash-Guard nur für Scene/Timeline
+                if play_settings["mode"] == "Magic Auto":
+                    magic_on_beat(phase)
+                    return
+
                 # Wenn ein Flash/Blinder gerade aktiv ist, Scene-Sync überspringen
-                # damit der Blinder nicht durch eine neue Szene übersch rieben wird
+                # damit der Blinder nicht durch eine neue Szene überschrieben wird
                 flash_running = any(e.active for e in state.events if e.type == "flash")
                 if flash_running:
                     return
@@ -436,19 +581,39 @@ def create():
                                         for k, v in data[f.id].items():
                                             f.set(k, v)
 
-                # modus 3 magic auto (beat-trigger)
-                elif play_settings["mode"] == "Magic Auto":
-                    magic_on_beat(phase)
-
                 # flash automatik overlay
                 if play_settings["flash_automatik"] and play_settings["mode"] != "Magic Auto":
                     flash_events = [e for e in state.events if e.type == "flash"]
                     if flash_events:
-                        if phase == "DROP" or beat_in_bar == 1:
+                        prev_phase    = play_settings.get("_prev_flash_phase", "")
+                        phase_entered = (phase != prev_phase)
+
+                        def _check_flash(phase_key, interval_key, count_key):
+                            mode = play_settings.get(phase_key, "off")
+                            if mode == "off":
+                                return False
+                            if mode == "on_enter":
+                                return phase_entered
+                            # interval
+                            if phase_entered:
+                                play_settings[count_key] = 0
+                            play_settings[count_key] = play_settings.get(count_key, 0) + 1
+                            iv = max(1, int(play_settings.get(interval_key, 1)))
+                            return play_settings[count_key] % iv == 0
+
+                        if phase == "DROP":
+                            should_flash = _check_flash("flash_drop_mode", "flash_drop_interval", "_flash_drop_count")
+                        elif phase == "BUILDUP":
+                            should_flash = _check_flash("flash_buildup_mode", "flash_buildup_interval", "_flash_buildup_count")
+                        else:
+                            should_flash = _check_flash("flash_break_mode", "flash_break_interval", "_flash_break_count")
+
+                        if should_flash:
                             for e in flash_events:
                                 if e.active: e.stop(state.engine)
                             random_flash = random.choice(flash_events)
                             random_flash.start(state.engine)
+                        play_settings["_prev_flash_phase"] = phase
 
             # ticker und lichttrigger (100 mal pro sekunde)
             def audio_ticker():
@@ -457,6 +622,10 @@ def create():
                 if play_settings["source_mode"] == "MP3":
                     elapsed_time = get_current_time()
                     if elapsed_time == 0.0: return
+                    # Energy Level aus Phase ableiten (MP3: kein echter RMS)
+                    _mp3_energy = {"BREAK": 0.2, "BUILDUP": 0.6, "DROP": 1.0}.get(
+                        audio_state.get("last_state", "DROP"), 0.5)
+                    magic_auto_state["_energy_level"] = _mp3_energy
                     
                     # 1.beat erkennung mp3
                     b_idx = audio_state["current_beat_idx"]
@@ -495,6 +664,9 @@ def create():
                 elif play_settings["source_mode"] == "LIVE":
                     if not live_audio_state["is_listening"]: return
 
+                    # Energy Level an Magic Auto weitergeben
+                    magic_auto_state["_energy_level"] = live_audio_state.get("energy_level", 0.5)
+
                     # 1. gesamtlautstärke (blauer balken)
                     # vu meter updaten
                     vol_meter.value = live_audio_state.get("volume", 0.0)
@@ -521,6 +693,12 @@ def create():
                         lbl_state.classes('phase-buildup', remove='phase-drop phase-break phase-wait')
                     else:
                         lbl_state.classes('phase-break', remove='phase-drop phase-buildup phase-wait')
+
+                    # Transient-Trigger (Synth/Blinder) weiterleiten
+                    if live_audio_state.get("transient_triggered"):
+                        live_audio_state["transient_triggered"] = False
+                        if play_settings["is_active"] and play_settings["mode"] == "Magic Auto":
+                            magic_on_transient(live_phase)
 
                     # beat aus der live berechnung
                     if live_audio_state["beat_triggered"]:

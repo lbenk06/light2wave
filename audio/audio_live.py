@@ -26,15 +26,17 @@ SAMPLE_RATE = ml_config.SAMPLE_RATE if _ML_AVAILABLE else 22050
 
 # --- Globaler State (Interface nach aussen unveraendert) ----------------------
 live_audio_state = {
-    "is_listening":   False,
-    "beat_triggered": False,
-    "beat_index":     0,
-    "level":          0.0,
-    "sensitivity":    3.5,
-    "device_id":      None,
-    "phase":          "WAITING",
-    "volume":         0.0,
-    "ml_active":      False,   # True wenn ML-Modell die Phase liefert
+    "is_listening":        False,
+    "beat_triggered":      False,
+    "beat_index":          0,
+    "level":               0.0,
+    "sensitivity":         3.5,
+    "device_id":           None,
+    "phase":               "WAITING",
+    "volume":              0.0,
+    "ml_active":           False,   # True wenn ML-Modell die Phase liefert
+    "transient_triggered": False,   # High-Band Spike (Synth/Transient)
+    "energy_level":        0.5,     # Langzeit-Energie-Verhältnis (0.0 - 1.0)
 }
 
 _stream                = None
@@ -42,6 +44,10 @@ _kick_energy_history   = np.zeros(20)
 _last_kick_time        = 0.0
 _short_term_energy     = np.zeros(10)   # ~0.5s
 _long_term_energy      = np.zeros(100)  # ~5s
+
+# Transient / High-Band Detektion (1-8 kHz)
+_high_energy_history   = np.zeros(30)
+_last_transient_time   = 0.0
 
 # ML-Zustand
 _mel_buffer        = None
@@ -64,6 +70,12 @@ def get_input_devices():
 
 def bandpass(data, low=40, high=150, fs=SAMPLE_RATE):
     b, a = butter(4, [low / (fs / 2), high / (fs / 2)], btype='band')
+    return lfilter(b, a, data)
+
+
+def _highband(data, low=1000, high=8000, fs=SAMPLE_RATE):
+    nyq = fs / 2
+    b, a = butter(4, [low / nyq, min(high / nyq, 0.999)], btype='band')
     return lfilter(b, a, data)
 
 
@@ -108,6 +120,7 @@ def _run_ml_inference():
 def _audio_callback(indata, frames, time_info, status):
     global _kick_energy_history, _last_kick_time
     global _short_term_energy, _long_term_energy
+    global _high_energy_history, _last_transient_time
     global _sample_remainder, _inference_thread
 
     if not live_audio_state["is_listening"]:
@@ -162,7 +175,25 @@ def _audio_callback(indata, frames, time_info, status):
         if not live_audio_state["ml_active"] and ratio >= 0.9:
             live_audio_state["phase"] = "DROP"
 
-    # ── 3. ML-Inferenz ───────────────────────────────────────────────────────
+    # ── 3. Transient / High-Band Detektion (1–8 kHz) ─────────────────────────
+    high_band    = _highband(mono)
+    high_energy  = float(np.sum(high_band ** 2))
+    _high_energy_history = np.roll(_high_energy_history, -1)
+    _high_energy_history[-1] = high_energy
+    high_avg     = float(np.mean(_high_energy_history))
+    high_thresh  = high_avg * 2.5
+    if high_energy > high_thresh and high_avg > 1e-8 and (now - _last_transient_time) > 0.12:
+        _last_transient_time = now
+        live_audio_state["transient_triggered"] = True
+
+    # ── 4. Langzeit-Energie (0–1) für Helligkeits-Skalierung ─────────────────
+    # ratio = short_avg / long_avg; <1 = ruhig, >1 = energetisch
+    if long_avg > 0:
+        live_audio_state["energy_level"] = max(0.0, min(1.0, (ratio - 0.4) / 1.2))
+    else:
+        live_audio_state["energy_level"] = 0.5
+
+    # ── 5. ML-Inferenz ───────────────────────────────────────────────────────
     if live_audio_state["ml_active"] and _mel_buffer is not None:
         hop      = ml_config.HOP_LENGTH
         combined = np.concatenate([_sample_remainder, mono])
@@ -183,6 +214,7 @@ def _audio_callback(indata, frames, time_info, status):
 
 def start_listening(device_id):
     global _stream, _kick_energy_history, _short_term_energy, _long_term_energy
+    global _high_energy_history, _last_transient_time
     global _mel_buffer, _sample_remainder
 
     if _stream is not None:
@@ -196,6 +228,8 @@ def start_listening(device_id):
         _kick_energy_history[:] = 0
         _short_term_energy[:]   = 0
         _long_term_energy[:]    = 0
+        _high_energy_history[:] = 0
+        _last_transient_time    = 0.0
         _sample_remainder       = np.zeros(0, dtype=np.float32)
 
         # ML-Modell laden
