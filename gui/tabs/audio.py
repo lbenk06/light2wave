@@ -13,8 +13,20 @@ from audio.audio_file import audio_state, analyze_audio_background, toggle_playb
 # live audio file importieren
 from audio.audio_live import live_audio_state, get_input_devices, start_listening, stop_listening
 
+# pro dj link (pioneer cdj netzwerk) importieren
+from audio.prolink_source import (
+    start_prolink, stop_prolink, is_running as prolink_running, backend_label,
+)
+
 # magic auto modus
 from engine.magic_auto import magic_auto_state, on_beat as magic_on_beat, on_transient as magic_on_transient, apply as magic_apply, EFFECT_OPTIONS
+
+# virtual light dj
+from engine.light_dj import (
+    VirtualLightDJ, PHASE_PALETTE, PALETTE_AUTO,
+    get_all_palettes, save_custom_palette,
+)
+_vldj = VirtualLightDJ()
 
 # lokaler state für die gui-steuerung
 play_settings = {
@@ -65,9 +77,22 @@ def create():
 
     # Audio-Quellschalter — Hardware-Button-Stil
     with ui.element('div').classes('w-full mb-4 border border-[#1e1e28] bg-[#0f0f14] rounded-sm p-3'):
-        ui.label('AUDIO QUELLE').classes('console-label mb-3')
-        ui.radio(['MP3', 'LIVE'], value='MP3').bind_value(play_settings, 'source_mode') \
-            .props('inline dark color=cyan')
+        with ui.row().classes('w-full items-center justify-between'):
+            ui.label('AUDIO QUELLE').classes('console-label')
+            prolink_status_chip = ui.label('ProLink: offline') \
+                .classes('text-[10px] font-mono text-gray-500 px-2 py-0.5 rounded') \
+                .style('background:#0a0a14; border:1px solid #1a1a2a;')
+
+        def _on_source_change(e):
+            # Beim Wechsel WEG vom ProLink-Modus: Listener stoppen → Netzwerk-Last + Threads frei
+            if e.value != 'PROLINK' and prolink_running():
+                stop_prolink()
+            # Beim Wechsel WEG vom LIVE-Modus: Mic-Stream + ML stoppen
+            if e.value != 'LIVE' and live_audio_state.get('is_listening'):
+                stop_listening()
+
+        ui.radio(['MP3', 'LIVE', 'PROLINK'], value='MP3').bind_value(play_settings, 'source_mode') \
+            .props('inline dark color=cyan').on_value_change(_on_source_change)
 
     with ui.row().classes('w-full gap-8 items-start'):
         
@@ -167,6 +192,61 @@ def create():
 
                 btn_live = ui.button('VERBINDEN', on_click=toggle_live).classes('w-full h-12 text-lg font-bold').props('color=green push')
 
+            # ── PRO DJ LINK ──────────────────────────────────────────────
+            with ui.column().bind_visibility_from(play_settings, 'source_mode', lambda m: m == 'PROLINK').classes('w-full'):
+                ui.label('1. Pro DJ Link (Pioneer CDJ Netzwerk)').classes('text-xl font-bold text-gray-200 mb-2')
+                ui.label('Rechner muss im selben LAN wie die CDJs sein. Beats kommen vom Master-Player.') \
+                    .classes('text-[11px] text-gray-500 mb-3')
+
+                with ui.column().classes('w-full bg-gray-800 p-3 rounded border border-purple-900 gap-1 mb-3'):
+                    pl_status   = ui.label('Status: Getrennt').classes('text-gray-400 text-sm font-mono')
+                    pl_backend  = ui.label('Backend: --').classes('text-[10px] text-gray-500')
+                    pl_master   = ui.label('Master Player: --').classes('text-purple-300 text-xs font-mono')
+                    pl_track    = ui.label('Track: --').classes('text-gray-200 text-xs font-mono truncate')
+                    pl_bpm_lbl  = ui.label('BPM: --').classes('text-purple-400 text-lg font-bold')
+
+                def toggle_prolink():
+                    if not live_audio_state.get('prolink_active'):
+                        ok, msg = start_prolink()
+                        if ok:
+                            pl_btn.props('color=red').set_text('TRENNEN')
+                            ui.notify('Pro DJ Link gestartet', color='green')
+                        else:
+                            ui.notify(f'Verbindung fehlgeschlagen: {msg}', color='red')
+                    else:
+                        stop_prolink()
+                        pl_btn.props('color=green').set_text('VERBINDEN')
+
+                pl_btn = ui.button('VERBINDEN', on_click=toggle_prolink) \
+                    .classes('w-full h-12 text-lg font-bold').props('color=green push')
+
+                # ── WAVEFORM CANVAS (statisch + dynamischer Playhead) ────
+                ui.label('Waveform').classes('text-xs text-gray-400 mt-4 mb-1')
+                wf_container = ui.element('div') \
+                    .classes('w-full rounded border border-purple-900') \
+                    .style('position:relative; height:90px; overflow:hidden; '
+                           'background:linear-gradient(to bottom,#0a0a14,#0f0f1a);')
+                with wf_container:
+                    # statisches SVG — wird NUR bei Track-Wechsel neu gebaut
+                    wf_svg_html = ui.html('', sanitize=False) \
+                        .style('position:absolute; inset:0; width:100%; height:100%; '
+                               'pointer-events:none;')
+                    # Fallback (zeigt sich wenn kein Track)
+                    wf_fallback = ui.label('NO TRACK LOADED / OFFLINE') \
+                        .classes('text-gray-600 text-[11px] font-mono tracking-widest') \
+                        .style('position:absolute; top:50%; left:50%; '
+                               'transform:translate(-50%,-50%); pointer-events:none;')
+                    # Playhead — separater leichter Layer, NUR diese Style-Property aendert sich
+                    wf_playhead = ui.element('div') \
+                        .style('position:absolute; top:0; bottom:0; width:2px; left:0%; '
+                               'background:#fff; box-shadow:0 0 8px rgba(255,255,255,0.7); '
+                               'display:none; pointer-events:none;')
+
+                # Time-Display unter der Waveform
+                with ui.row().classes('w-full justify-between mt-1'):
+                    wf_time_lbl = ui.label('00:00').classes('text-[10px] text-gray-500 font-mono')
+                    wf_len_lbl  = ui.label('--:--').classes('text-[10px] text-gray-500 font-mono')
+
         # rechts: playback und moduswahl
         with ui.element('div').classes('w-6/12 border border-[#1e1e28] bg-[#0f0f14] rounded-sm p-4'):
             ui.label('SHOW STEUERUNG').classes('console-label mb-3')
@@ -187,7 +267,7 @@ def create():
             
             # hauptmodus
             ui.label('Live-Modus (Basis-Licht):').classes('text-sm text-gray-400 font-bold mt-2')
-            ui.radio(['Scene Sync', 'Custom Timeline', 'Magic Auto'], value='Scene Sync').bind_value(play_settings, 'mode').props('inline dark color=cyan').classes('mb-2')
+            ui.radio(['Scene Sync', 'Custom Timeline', 'Magic Auto', 'Virtual DJ'], value='Scene Sync').bind_value(play_settings, 'mode').props('inline dark color=cyan').classes('mb-2')
             
             # bank auswahl für szenen sync
             with ui.column().bind_visibility_from(play_settings, 'mode', lambda m: m == 'Scene Sync').classes('w-full bg-gray-800 p-3 rounded mb-4 border border-gray-600'):
@@ -442,9 +522,153 @@ def create():
 
                 ui.timer(0.1, update_color_preview)
 
+            # --- VIRTUAL LIGHT DIRECTOR ---
+            with ui.column().classes('w-full bg-gray-800 p-3 rounded border border-purple-900 gap-3') \
+                    .bind_visibility_from(play_settings, 'mode', lambda m: m == 'Virtual DJ'):
+
+                # Header
+                with ui.row().classes('w-full items-center justify-between'):
+                    ui.label('VIRTUAL LIGHT DIRECTOR').classes('text-sm font-black tracking-widest text-purple-400')
+                    vldj_switch = ui.switch('Aktiv', value=True).props('color=purple')
+                    vldj_switch.on_value_change(lambda e: setattr(_vldj, 'is_active', e.value))
+
+                # A. LIVE TELEMETRIE
+                ui.label('LIVE TELEMETRIE').classes('text-xs text-gray-400 font-bold')
+                with ui.column().classes('w-full bg-gray-900 p-2 rounded border border-purple-800 gap-2'):
+                    with ui.row().classes('w-full gap-3 items-center'):
+                        vldj_phase_badge = ui.label('WAITING') \
+                            .classes('lcd-display text-xs font-black tracking-widest phase-wait px-2 py-1') \
+                            .style('border-radius:2px; border:1px solid #1a1a2a;')
+                        vldj_palette_lbl = ui.label('EIS').classes('text-purple-300 text-xs font-mono')
+                    with ui.row().classes('w-full items-center gap-2'):
+                        ui.label('Energie').classes('text-[10px] text-gray-500 w-12 whitespace-nowrap')
+                        vldj_energy_bar = ui.linear_progress(value=0.0) \
+                            .props('color=purple track-color=gray-800 size=8px').classes('flex-grow')
+                        vldj_beat_dot = ui.element('div').style(
+                            'width:12px;height:12px;border-radius:50%;'
+                            'background:#333;border:1px solid #555;flex-shrink:0;'
+                        )
+
+                # B. LD CONTROLS
+                ui.label('LD CONTROLS').classes('text-xs text-gray-400 font-bold mt-1')
+                with ui.column().classes('w-full bg-gray-900 p-2 rounded border border-gray-700 gap-2'):
+                    _pal_options = [PALETTE_AUTO] + list(get_all_palettes().keys())
+                    vldj_palette_sel = ui.select(
+                        options=_pal_options,
+                        value=PALETTE_AUTO,
+                        label='Palette (alle Phasen)'
+                    ).props('dark standout dense color=purple').classes('w-full')
+
+                    def _on_palette_sel(e):
+                        _vldj.set_palette(None if e.value == PALETTE_AUTO else e.value)
+                    vldj_palette_sel.on_value_change(_on_palette_sel)
+
+                    with ui.row().classes('w-full items-center gap-2 mt-1'):
+                        ui.label('Aggressivität').classes('text-gray-300 text-xs whitespace-nowrap')
+                        aggr_sl = ui.slider(min=0.0, max=1.0, step=0.01, value=0.5) \
+                            .props('dark color=purple label-always').classes('flex-grow')
+                        aggr_sl.on_value_change(lambda e: _vldj.set_aggressiveness(e.value))
+                    ui.label('0 = sanft / 0.5 = Standard / 1 = hart') \
+                        .classes('text-[10px] text-gray-600 italic')
+
+                # C. CUSTOM PALETTE CREATOR
+                ui.label('PALETTE ERSTELLEN').classes('text-xs text-gray-400 font-bold mt-1')
+                with ui.column().classes('w-full bg-gray-900 p-2 rounded border border-gray-700 gap-2'):
+                    cp_name = ui.input('Palettenname', value='Meine Palette') \
+                        .props('dark dense color=purple').classes('w-full')
+                    cp_color_inputs = []
+                    with ui.grid(columns=4).classes('w-full gap-1'):
+                        for _ci, _hex in enumerate(['#ff1a00', '#00aaff', '#cc00ff', '#ffffff']):
+                            with ui.column().classes('items-center gap-0'):
+                                ui.label(f'F{_ci + 1}').classes('text-[9px] text-gray-500')
+                                _inp = ui.color_input(value=_hex).classes('w-full')
+                                cp_color_inputs.append(_inp)
+
+                    def _save_palette():
+                        name = cp_name.value.strip()
+                        if not name:
+                            ui.notify('Bitte Namen eingeben!', color='red')
+                            return
+                        colors = []
+                        for ci in cp_color_inputs:
+                            hex_s = ci.value.lstrip('#')
+                            try:
+                                r = int(hex_s[0:2], 16) / 255.0
+                                g = int(hex_s[2:4], 16) / 255.0
+                                b = int(hex_s[4:6], 16) / 255.0
+                            except Exception:
+                                r = g = b = 1.0
+                            colors.append((r, g, b))
+                        try:
+                            save_custom_palette(name, colors)
+                            new_opts = [PALETTE_AUTO] + list(get_all_palettes().keys())
+                            vldj_palette_sel.options = new_opts
+                            vldj_palette_sel.set_value(name)
+                            vldj_palette_sel.update()
+                            ui.notify(f'"{name}" gespeichert!', color='green')
+                        except Exception as ex:
+                            ui.notify(str(ex), color='red')
+
+                    ui.button('PALETTE SPEICHERN', on_click=_save_palette) \
+                        .props('color=purple push dense').classes('w-full font-bold text-xs')
+
+                # D. PANIC BUTTONS
+                ui.label('PANIC').classes('text-xs text-gray-400 font-bold mt-1')
+                with ui.row().classes('w-full gap-2'):
+                    def _panic_blackout():
+                        _vldj.blackout(state.engine)
+                        _vldj.is_active = False
+                        vldj_switch.set_value(False)
+
+                    def _panic_white():
+                        _vldj.white_flash(state.engine)
+
+                    ui.button('BLACKOUT', on_click=_panic_blackout) \
+                        .props('push').classes(
+                            'flex-grow h-14 text-base font-black tracking-widest text-red-400'
+                        ).style('background:#1a0000; border:2px solid #cc0000;')
+                    ui.button('WHITE FLASH', on_click=_panic_white) \
+                        .props('push').classes(
+                            'flex-grow h-14 text-base font-black tracking-widest text-gray-900'
+                        ).style('background:#ffffff;')
+
+                # Live-Telemetrie (20 Hz)
+                def _update_vldj_status():
+                    if play_settings['mode'] != 'Virtual DJ':
+                        return
+                    if play_settings['source_mode'] == 'LIVE':
+                        ph = live_audio_state.get('phase', 'WAITING')
+                        en = live_audio_state.get('energy_level', 0.0)
+                    elif play_settings['source_mode'] == 'PROLINK':
+                        ph = live_audio_state.get('phase') or 'DROP'
+                        en = {'BREAK': 0.2, 'BUILDUP': 0.6, 'DROP': 1.0}.get(ph, 0.7)
+                    else:
+                        ph = audio_state.get('last_state') or 'WAITING'
+                        en = {'BREAK': 0.2, 'BUILDUP': 0.6, 'DROP': 1.0}.get(ph, 0.0)
+
+                    vldj_energy_bar.value = en
+                    vldj_phase_badge.set_text(ph)
+                    if ph == 'DROP':
+                        vldj_phase_badge.classes('phase-drop', remove='phase-buildup phase-break phase-wait')
+                    elif ph == 'BUILDUP':
+                        vldj_phase_badge.classes('phase-buildup', remove='phase-drop phase-break phase-wait')
+                    else:
+                        vldj_phase_badge.classes('phase-break phase-wait', remove='phase-drop phase-buildup')
+
+                    pal = _vldj._palette_override or PHASE_PALETTE.get(ph, 'eis')
+                    vldj_palette_lbl.set_text(pal.upper())
+
+                    d = int(min(_vldj._dim_env * 255, 255))
+                    vldj_beat_dot.style(
+                        f'width:12px;height:12px;border-radius:50%;'
+                        f'background:rgb({d},{d // 4},{d // 2});border:1px solid #555;flex-shrink:0;'
+                    )
+
+                ui.timer(0.05, _update_vldj_status)
+
             # overlay flash- automatik
             ui.separator().classes('bg-gray-700 my-2')
-            with ui.column().classes('w-full gap-2 mb-4').bind_visibility_from(play_settings, 'mode', lambda m: m != 'Magic Auto'):
+            with ui.column().classes('w-full gap-2 mb-4').bind_visibility_from(play_settings, 'mode', lambda m: m not in ('Magic Auto', 'Virtual DJ')):
                 ui.checkbox('Flash Automatik zuschalten', value=True) \
                     .bind_value(play_settings, 'flash_automatik') \
                     .classes('text-yellow-400 font-bold')
@@ -506,6 +730,20 @@ def create():
                 # Magic Auto läuft immer durch — Flash-Guard nur für Scene/Timeline
                 if play_settings["mode"] == "Magic Auto":
                     magic_on_beat(phase)
+                    return
+
+                # Virtual DJ — beat_in_bar 0-basiert übergeben
+                if play_settings["mode"] == "Virtual DJ":
+                    if not _vldj.is_active:
+                        return
+                    if play_settings["source_mode"] == "LIVE" and live_audio_state.get("ml_active"):
+                        ml_bar = live_audio_state.get("beat_in_bar", 0)
+                    else:
+                        ml_bar = (beat_in_bar - 1) % 16  # 1-4 → 0-3
+                    energy = live_audio_state.get("energy_level", 0.5) \
+                             if play_settings["source_mode"] == "LIVE" \
+                             else {"BREAK": 0.2, "BUILDUP": 0.6, "DROP": 1.0}.get(phase or "DROP", 0.5)
+                    _vldj.trigger_beat(ml_bar, phase or "DROP", energy)
                     return
 
                 # Wenn ein Flash/Blinder gerade aktiv ist, Scene-Sync überspringen
@@ -661,6 +899,41 @@ def create():
                                 
                             audio_state["last_state"] = current_state
 
+                elif play_settings["source_mode"] == "PROLINK":
+                    if not live_audio_state.get("prolink_active"):
+                        return
+
+                    # ProLink liefert keine Phase — User-gesetzt oder Default DROP
+                    pl_phase = live_audio_state.get("phase") or "DROP"
+                    if not pl_phase or pl_phase == "WAITING":
+                        pl_phase = "DROP"
+                        live_audio_state["phase"] = pl_phase
+
+                    # Energy-Level fuer Magic Auto / VLDJ aus Phase ableiten
+                    magic_auto_state["_energy_level"] = {
+                        "BREAK": 0.2, "BUILDUP": 0.6, "DROP": 1.0
+                    }.get(pl_phase, 0.7)
+
+                    lbl_state.set_text(pl_phase)
+                    if pl_phase == "DROP":
+                        lbl_state.classes('phase-drop', remove='phase-buildup phase-break phase-wait')
+                    elif pl_phase == "BUILDUP":
+                        lbl_state.classes('phase-buildup', remove='phase-drop phase-break phase-wait')
+                    else:
+                        lbl_state.classes('phase-break', remove='phase-drop phase-buildup phase-wait')
+
+                    # Beat aus dem Pioneer-Netzwerk
+                    if live_audio_state["beat_triggered"]:
+                        live_audio_state["beat_triggered"] = False
+                        beat_in_bar = live_audio_state["beat_index"] + 1
+                        bpm = live_audio_state.get("bpm_prolink", 0.0)
+                        lbl_beat.set_text(f"PROLINK   |   {beat_in_bar}/4   {bpm:.1f} BPM")
+                        if beat_in_bar == 1:
+                            lbl_beat.classes('text-purple-400 font-bold', remove='text-gray-300')
+                        else:
+                            lbl_beat.classes('text-gray-300', remove='text-purple-400 font-bold')
+                        trigger_lights(beat_in_bar, pl_phase)
+
                 elif play_settings["source_mode"] == "LIVE":
                     if not live_audio_state["is_listening"]: return
 
@@ -694,11 +967,14 @@ def create():
                     else:
                         lbl_state.classes('phase-break', remove='phase-drop phase-buildup phase-wait')
 
-                    # Transient-Trigger (Synth/Blinder) weiterleiten
+                    # Transient-Trigger weiterleiten
                     if live_audio_state.get("transient_triggered"):
                         live_audio_state["transient_triggered"] = False
-                        if play_settings["is_active"] and play_settings["mode"] == "Magic Auto":
-                            magic_on_transient(live_phase)
+                        if play_settings["is_active"]:
+                            if play_settings["mode"] == "Magic Auto":
+                                magic_on_transient(live_phase)
+                            elif play_settings["mode"] == "Virtual DJ":
+                                _vldj.trigger_transient()
 
                     # beat aus der live berechnung
                     if live_audio_state["beat_triggered"]:
@@ -715,7 +991,7 @@ def create():
                         trigger_lights(beat_in_bar, live_phase)
 
             def magic_auto_ticker():
-                """Kontinuierlicher 100 Hz Update fuer Magic Auto (smooth fading, strobe, effekte)."""
+                """Kontinuierlicher 100 Hz Update fuer Magic Auto."""
                 if not play_settings["is_active"]:
                     return
                 if play_settings["mode"] != "Magic Auto":
@@ -724,11 +1000,157 @@ def create():
                     if not audio_state.get("is_playing", False):
                         return
                     phase = audio_state.get("last_state", "DROP")
+                elif play_settings["source_mode"] == "PROLINK":
+                    if not live_audio_state.get("prolink_active"):
+                        return
+                    phase = live_audio_state.get("phase") or "DROP"
                 else:
                     if not live_audio_state["is_listening"]:
                         return
                     phase = live_audio_state.get("phase", "DROP")
                 magic_apply(state.engine, phase)
 
+            import time as _time
+            _vldj_last_t = [0.0]
+
+            def vldj_ticker():
+                """Kontinuierlicher 100 Hz Update fuer Virtual DJ."""
+                if not play_settings["is_active"]:
+                    return
+                if play_settings["mode"] != "Virtual DJ":
+                    return
+                if play_settings["source_mode"] == "MP3":
+                    if not audio_state.get("is_playing", False):
+                        return
+                    phase  = audio_state.get("last_state") or "BREAK"
+                    energy = {"BREAK": 0.2, "BUILDUP": 0.6, "DROP": 1.0}.get(phase, 0.5)
+                elif play_settings["source_mode"] == "PROLINK":
+                    if not live_audio_state.get("prolink_active"):
+                        return
+                    phase  = live_audio_state.get("phase") or "DROP"
+                    energy = {"BREAK": 0.2, "BUILDUP": 0.6, "DROP": 1.0}.get(phase, 0.7)
+                else:
+                    if not live_audio_state["is_listening"]:
+                        return
+                    phase  = live_audio_state.get("phase", "BREAK")
+                    energy = live_audio_state.get("energy_level", 0.5)
+
+                now = _time.time()
+                dt  = min(now - _vldj_last_t[0], 0.05) if _vldj_last_t[0] > 0 else 0.01
+                _vldj_last_t[0] = now
+                _vldj.tick(state.engine, dt, phase, energy)
+
             ui.timer(0.01, audio_ticker)
             ui.timer(0.01, magic_auto_ticker)
+            ui.timer(0.01, vldj_ticker)
+
+            # ── PRO DJ LINK: Status-Chip + Waveform + Playhead ──────────
+            _wf_state = {"track_id": object()}   # sentinel ungleich "None"
+
+            def _format_mmss(sec: float) -> str:
+                if sec <= 0: return "--:--"
+                m = int(sec // 60); s = int(sec % 60)
+                return f"{m:02d}:{s:02d}"
+
+            def prolink_status_ticker():
+                """2 Hz — billig: Status-Chip + Track-Labels."""
+                active = bool(live_audio_state.get('prolink_active'))
+                if active:
+                    backend = backend_label()
+                    prolink_status_chip.set_text(f"ProLink: {backend}")
+                    prolink_status_chip.style(
+                        'background:#0a1a14; border:1px solid #00ff8855; '
+                        'color:#7fffaa; padding:2px 8px; border-radius:2px;'
+                    )
+                else:
+                    prolink_status_chip.set_text('ProLink: offline')
+                    prolink_status_chip.style(
+                        'background:#0a0a14; border:1px solid #1a1a2a; '
+                        'color:#666; padding:2px 8px; border-radius:2px;'
+                    )
+
+                # Detail-Panel nur updaten wenn sichtbar
+                if play_settings['source_mode'] != 'PROLINK':
+                    return
+                pl_status.set_text(f"Status: {live_audio_state.get('prolink_status','Getrennt')}")
+                pl_backend.set_text(f"Backend: {backend_label()}")
+                mp = live_audio_state.get('prolink_master_player')
+                pl_master.set_text(f"Master Player: {mp if mp else '--'}")
+                title  = live_audio_state.get('track_title') or ''
+                artist = live_audio_state.get('track_artist') or ''
+                track_str = (f"{artist} — {title}" if (artist and title)
+                             else (title or artist or '--'))
+                pl_track.set_text(f"Track: {track_str}")
+                bpm = live_audio_state.get('bpm_prolink', 0.0)
+                pl_bpm_lbl.set_text(f"BPM: {bpm:.1f}" if bpm > 0 else "BPM: --")
+                wf_len_lbl.set_text(_format_mmss(live_audio_state.get('track_length', 0.0)))
+
+            def waveform_rebuild_ticker():
+                """0.3 Hz Polling — rebuild SVG NUR wenn Track-ID sich aendert."""
+                if play_settings['source_mode'] != 'PROLINK':
+                    return
+                tid = live_audio_state.get('track_id')
+                if tid == _wf_state['track_id']:
+                    return
+                _wf_state['track_id'] = tid
+
+                wf = live_audio_state.get('waveform_data')
+                if wf is None or len(wf) == 0:
+                    wf_svg_html.set_content('')
+                    wf_fallback.style('position:absolute; top:50%; left:50%; '
+                                      'transform:translate(-50%,-50%); '
+                                      'pointer-events:none; display:block;')
+                    wf_playhead.style('position:absolute; top:0; bottom:0; '
+                                      'width:2px; left:0%; background:#fff; '
+                                      'box-shadow:0 0 8px rgba(255,255,255,0.7); '
+                                      'display:none; pointer-events:none;')
+                    return
+
+                wf_fallback.style('display:none;')
+                wf_playhead.style('position:absolute; top:0; bottom:0; '
+                                  'width:2px; left:0%; background:#fff; '
+                                  'box-shadow:0 0 8px rgba(255,255,255,0.7); '
+                                  'display:block; pointer-events:none;')
+
+                # SVG bauen — Hoehe 0..31 → 0..100, vertikal zentriert
+                n = len(wf)
+                bar_w = 1000.0 / n
+                rects = []
+                for i, byte in enumerate(wf):
+                    h = (int(byte) & 0x1f) / 31.0      # nur untere 5 Bit = Hoehe
+                    bar_h = max(1.0, h * 95.0)
+                    y = (100.0 - bar_h) / 2.0
+                    x = i * bar_w
+                    rects.append(
+                        f'<rect x="{x:.2f}" y="{y:.2f}" '
+                        f'width="{bar_w:.2f}" height="{bar_h:.2f}" '
+                        f'fill="#a855f7"/>'
+                    )
+                svg = (
+                    '<svg width="100%" height="100%" '
+                    'preserveAspectRatio="none" viewBox="0 0 1000 100" '
+                    'xmlns="http://www.w3.org/2000/svg">'
+                    + ''.join(rects) + '</svg>'
+                )
+                wf_svg_html.set_content(svg)
+
+            def playhead_ticker():
+                """~30 Hz — bewegt nur den 2px-Playhead-Layer (sehr leicht)."""
+                if play_settings['source_mode'] != 'PROLINK':
+                    return
+                length = live_audio_state.get('track_length', 0.0)
+                pos    = live_audio_state.get('current_time', 0.0)
+                if length <= 0 or live_audio_state.get('waveform_data') is None:
+                    return
+                pct = max(0.0, min(100.0, (pos / length) * 100.0))
+                wf_playhead.style(
+                    f'position:absolute; top:0; bottom:0; width:2px; '
+                    f'left:{pct:.2f}%; background:#fff; '
+                    f'box-shadow:0 0 8px rgba(255,255,255,0.7); '
+                    f'display:block; pointer-events:none;'
+                )
+                wf_time_lbl.set_text(_format_mmss(pos))
+
+            ui.timer(0.5, prolink_status_ticker)
+            ui.timer(0.3, waveform_rebuild_ticker)
+            ui.timer(1/30, playhead_ticker)

@@ -36,7 +36,10 @@ live_audio_state = {
     "volume":              0.0,
     "ml_active":           False,   # True wenn ML-Modell die Phase liefert
     "transient_triggered": False,   # High-Band Spike (Synth/Transient)
-    "energy_level":        0.5,     # Langzeit-Energie-Verhältnis (0.0 - 1.0)
+    "energy_level":        0.5,     # Langzeit-Energie-Verhältnis (0.0-1.0)
+    # ML-Zusatzdaten (nur wenn ml_active=True)
+    "beat_in_bar":         0,       # Schlag-Position 0-15 in der Phrase
+    "beat_phase":          0.0,     # normierte Phase im Takt 0.0-1.0
 }
 
 _stream                = None
@@ -101,18 +104,34 @@ def _try_load_ml_model() -> bool:
 
 def _run_ml_inference():
     """Laeuft in einem Daemon-Thread. Fuehrt Modell-Inferenz durch und
-    aktualisiert live_audio_state['phase']."""
+    aktualisiert live_audio_state mit phase, beat_in_bar und beat_phase."""
     if _ml_model is None or _mel_buffer is None or not _mel_buffer.is_ready:
         return
     try:
-        window = _mel_buffer.get_window()                           # (CONTEXT_FRAMES, N_MELS)
-        mel_t  = torch.from_numpy(window.T).unsqueeze(0).to(_ml_device)  # (1, N_MELS, CTX)
+        window = _mel_buffer.get_window()
+        mel_t  = torch.from_numpy(window.T).unsqueeze(0).to(_ml_device)
         with torch.no_grad():
             outputs = _ml_model(mel_t)
+
+        if not live_audio_state["is_listening"]:
+            return
+
+        # Phase (BREAK / BUILDUP / DROP)
         phrase_type = int(torch.argmax(outputs['phase_type'][0]).item())
-        phase_name  = phase_idx_to_name(phrase_type)
-        if live_audio_state["is_listening"]:
-            live_audio_state["phase"] = phase_name
+        live_audio_state["phase"] = phase_idx_to_name(phrase_type)
+
+        # Beat-Position im Takt (0-15)
+        live_audio_state["beat_in_bar"] = int(
+            torch.argmax(outputs['beat_in_bar'][0]).item()
+        )
+
+        # Beat-Phase als normierter Wert 0.0-1.0 (aus sin/cos Encoding)
+        bp = outputs['beat_phase'][0]
+        sin_v, cos_v = float(bp[0].item()), float(bp[1].item())
+        import math
+        live_audio_state["beat_phase"] = round(
+            (math.atan2(sin_v, cos_v) + math.pi) / (2.0 * math.pi), 4
+        )
     except Exception:
         pass
 
