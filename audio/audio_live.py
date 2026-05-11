@@ -1,291 +1,219 @@
-import numpy as np
-import sounddevice as sd
-from scipy.signal import butter, lfilter
-import time
+"""
+audio_live.py — Live-Audio-Eingang fuer light2wave.
+
+Duenne Wrapper-Schicht um die `PLOEngine` (audio/plo_engine.py).
+Behaelt den ueberlappenden `live_audio_state`-Vertrag damit alle
+existierenden Konsumenten (backend/audio_loop.py, backend/state.py,
+gui/tabs/audio.py, audio/prolink_source.py) ohne Aenderung weiterlaufen.
+
+Frueheres Setup mit ML-Modell + Kick-Bandpass-Detection wurde durch
+die deterministische PLO-Engine ersetzt — sauberer, schneller, ohne
+PyTorch-Abhaengigkeit im Live-Pfad.
+"""
+from __future__ import annotations
+
 import threading
-import sys
-import os
+import time
+from typing import Optional
 
-# --- ML Integration (optional) -----------------------------------------------
-_ML_AVAILABLE = False
-try:
-    _ML_DIR = os.path.join(os.path.dirname(__file__), '..', 'machinelearning')
-    sys.path.insert(0, os.path.abspath(_ML_DIR))
-    import config as ml_config
-    from utils.audio_features import RollingMelBuffer
-    from model import load_model
-    from utils.label_utils import phase_idx_to_name
-    import torch
-    _ML_AVAILABLE = True
-except Exception as _ml_err:
-    print(f"[audio_live] ML-Import nicht verfuegbar: {_ml_err}")
-
-# Samplerate passend zum ML-Modell (22050Hz). Kick-Detection funktioniert
-# bei 22050Hz genauso gut — Nyquist liegt bei 11025Hz, weit ueber 150Hz.
-SAMPLE_RATE = ml_config.SAMPLE_RATE if _ML_AVAILABLE else 22050
-
-# --- Globaler State (Interface nach aussen unveraendert) ----------------------
-live_audio_state = {
-    "is_listening":        False,
-    "beat_triggered":      False,
-    "beat_index":          0,
-    "level":               0.0,
-    "sensitivity":         3.5,
-    "device_id":           None,
-    "phase":               "WAITING",
-    "volume":              0.0,
-    "ml_active":           False,   # True wenn ML-Modell die Phase liefert
-    "transient_triggered": False,   # High-Band Spike (Synth/Transient)
-    "energy_level":        0.5,     # Langzeit-Energie-Verhältnis (0.0-1.0)
-    # ML-Zusatzdaten (nur wenn ml_active=True)
-    "beat_in_bar":         0,       # Schlag-Position 0-15 in der Phrase
-    "beat_phase":          0.0,     # normierte Phase im Takt 0.0-1.0
-}
-
-_stream                = None
-_kick_energy_history   = np.zeros(20)
-_last_kick_time        = 0.0
-_short_term_energy     = np.zeros(10)   # ~0.5s
-_long_term_energy      = np.zeros(100)  # ~5s
-
-# Transient / High-Band Detektion (1-8 kHz)
-_high_energy_history   = np.zeros(30)
-_last_transient_time   = 0.0
-
-# ML-Zustand
-_mel_buffer        = None
-_ml_model          = None
-_ml_device         = None
-_sample_remainder  = np.zeros(0, dtype=np.float32)
-_inference_thread  = None
+from audio.plo_engine import PLOEngine, get_input_devices  # noqa: F401
 
 
 # -----------------------------------------------------------------------------
+# Public State - Vertrag mit Konsumenten
+# -----------------------------------------------------------------------------
+live_audio_state = {
+    "is_listening":        False,
+    "device_id":           None,
+    "sensitivity":         3.5,        # nicht mehr genutzt, fuer Compat behalten
 
-def get_input_devices():
-    devices = sd.query_devices()
-    inputs = {}
-    for i, d in enumerate(devices):
-        if d['max_input_channels'] > 0:
-            inputs[i] = f"{i}: {d['name']}"
-    return inputs
+    # Beat-Events
+    "beat_triggered":      False,      # einmal True pro Beat — Konsument loescht
+    "beat_index":          0,          # 0..3 (Beat in Bar — Compat-Name)
+    "beat_in_bar":         0,          # 0..3 (PLO-Engine Counter)
+    "beat_in_phrase":      0,          # 0..31 (32-Beat-Phrase)
+    "bar_in_phrase":       0,          # 0..7 (Bar in 8-Bar-Phrase)
+    "beat_phase":          0.0,        # 0..1 — kontinuierliche Oszillator-Phase
 
+    # Tempo
+    "bpm":                 120.0,
+    "bpm_locked":          False,
+    "bar_locked":          False,
+    "tempo_status":        "INIT",     # INIT | SEEK | LOCK | BREAK | MANUAL
 
-def bandpass(data, low=40, high=150, fs=SAMPLE_RATE):
-    b, a = butter(4, [low / (fs / 2), high / (fs / 2)], btype='band')
-    return lfilter(b, a, data)
+    # Phrase
+    "phase":               "WAITING",  # WAITING | BREAK | BUILDUP | DROP
 
+    # Pegel
+    "volume":              0.0,        # 0..1 Input-Peak
+    "level":               0.0,        # 0..1 (Compat — wird auf input_peak gemappt)
+    "transient_triggered": False,      # Compat — wird bei Beat-1-Wechsel getriggert
+    "energy_level":        0.5,        # 0..1 normalisierte Energie
 
-def _highband(data, low=1000, high=8000, fs=SAMPLE_RATE):
-    nyq = fs / 2
-    b, a = butter(4, [low / nyq, min(high / nyq, 0.999)], btype='band')
-    return lfilter(b, a, data)
-
-
-def _try_load_ml_model() -> bool:
-    """Laedt das trainierte ML-Modell. Gibt True zurueck bei Erfolg."""
-    global _ml_model, _ml_device, _mel_buffer
-    if not _ML_AVAILABLE:
-        return False
-    try:
-        if not os.path.exists(ml_config.MODEL_SAVE_PATH):
-            print("[audio_live] Kein trainiertes Modell gefunden — einfache Erkennung aktiv.")
-            return False
-        _ml_device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        _ml_model  = load_model(ml_config.MODEL_SAVE_PATH).to(_ml_device)
-        _ml_model.eval()
-        _mel_buffer = RollingMelBuffer()
-        print(f"[audio_live] ML-Modell geladen ({_ml_device}) — Phase-Erkennung aktiv")
-        return True
-    except Exception as e:
-        print(f"[audio_live] ML-Laden fehlgeschlagen: {e}")
-        return False
+    # Mode
+    "mode":                "AUTO",     # AUTO | MANUAL
+    "ml_active":           False,      # immer False - Compat
+}
 
 
-def _run_ml_inference():
-    """Laeuft in einem Daemon-Thread. Fuehrt Modell-Inferenz durch und
-    aktualisiert live_audio_state mit phase, beat_in_bar und beat_phase."""
-    if _ml_model is None or _mel_buffer is None or not _mel_buffer.is_ready:
-        return
-    try:
-        window = _mel_buffer.get_window()
-        mel_t  = torch.from_numpy(window.T).unsqueeze(0).to(_ml_device)
-        with torch.no_grad():
-            outputs = _ml_model(mel_t)
-
-        if not live_audio_state["is_listening"]:
-            return
-
-        # Phase (BREAK / BUILDUP / DROP)
-        phrase_type = int(torch.argmax(outputs['phase_type'][0]).item())
-        live_audio_state["phase"] = phase_idx_to_name(phrase_type)
-
-        # Beat-Position im Takt (0-15)
-        live_audio_state["beat_in_bar"] = int(
-            torch.argmax(outputs['beat_in_bar'][0]).item()
-        )
-
-        # Beat-Phase als normierter Wert 0.0-1.0 (aus sin/cos Encoding)
-        bp = outputs['beat_phase'][0]
-        sin_v, cos_v = float(bp[0].item()), float(bp[1].item())
-        import math
-        live_audio_state["beat_phase"] = round(
-            (math.atan2(sin_v, cos_v) + math.pi) / (2.0 * math.pi), 4
-        )
-    except Exception:
-        pass
+# -----------------------------------------------------------------------------
+# Engine + Bridge-Thread
+# -----------------------------------------------------------------------------
+_engine: Optional[PLOEngine] = None
+_bridge_stop = threading.Event()
+_bridge_th: Optional[threading.Thread] = None
+_BRIDGE_HZ = 60   # Snapshot-Rate fuer live_audio_state-Updates
 
 
-def _audio_callback(indata, frames, time_info, status):
-    global _kick_energy_history, _last_kick_time
-    global _short_term_energy, _long_term_energy
-    global _high_energy_history, _last_transient_time
-    global _sample_remainder, _inference_thread
-
-    if not live_audio_state["is_listening"]:
-        return
-
-    mono = np.mean(indata, axis=1).astype(np.float32)
-
-    # ── 1. Lautstaerke / einfache Phase (Fallback) ───────────────────────────
-    overall_rms = float(np.sqrt(np.mean(mono ** 2)))
-    if np.isnan(overall_rms):
-        overall_rms = 0.0
-
-    _short_term_energy = np.roll(_short_term_energy, -1)
-    _short_term_energy[-1] = overall_rms
-    _long_term_energy  = np.roll(_long_term_energy,  -1)
-    _long_term_energy[-1]  = overall_rms
-
-    short_avg = float(np.mean(_short_term_energy))
-    long_avg  = float(np.mean(_long_term_energy))
-    ratio     = 1.0
-
-    if long_avg > 0:
-        ratio = short_avg / long_avg
-        if not live_audio_state["ml_active"]:
-            # Einfache Schwellwert-Erkennung nur wenn kein ML aktiv
-            if ratio < 0.8:
-                live_audio_state["phase"] = "BREAK"
-            elif ratio > 1.2:
-                live_audio_state["phase"] = "DROP"
-            else:
-                if live_audio_state["phase"] == "BREAK":
-                    live_audio_state["phase"] = "BUILDUP"
-
-    # ── 2. Beat-Erkennung (Kick-Band 40–150 Hz) ──────────────────────────────
-    kick_band = bandpass(mono)
-    energy    = float(np.sum(kick_band ** 2))
-
-    _kick_energy_history = np.roll(_kick_energy_history, -1)
-    _kick_energy_history[-1] = energy
-
-    threshold = float(np.mean(_kick_energy_history)) * live_audio_state["sensitivity"]
-
-    live_audio_state["volume"] = min(overall_rms * 4.0, 1.0)
-    live_audio_state["level"]  = min(energy / (threshold if threshold > 0 else 1), 1.5) / 1.5
-
-    now = time.time()
-    if energy > threshold and (now - _last_kick_time) > 0.25:
-        _last_kick_time = now
-        live_audio_state["beat_triggered"] = True
-        live_audio_state["beat_index"]     = (live_audio_state["beat_index"] + 1) % 4
-        # Beat-basierter Phase-Hint nur ohne ML
-        if not live_audio_state["ml_active"] and ratio >= 0.9:
-            live_audio_state["phase"] = "DROP"
-
-    # ── 3. Transient / High-Band Detektion (1–8 kHz) ─────────────────────────
-    high_band    = _highband(mono)
-    high_energy  = float(np.sum(high_band ** 2))
-    _high_energy_history = np.roll(_high_energy_history, -1)
-    _high_energy_history[-1] = high_energy
-    high_avg     = float(np.mean(_high_energy_history))
-    high_thresh  = high_avg * 2.5
-    if high_energy > high_thresh and high_avg > 1e-8 and (now - _last_transient_time) > 0.12:
-        _last_transient_time = now
-        live_audio_state["transient_triggered"] = True
-
-    # ── 4. Langzeit-Energie (0–1) für Helligkeits-Skalierung ─────────────────
-    # ratio = short_avg / long_avg; <1 = ruhig, >1 = energetisch
-    if long_avg > 0:
-        live_audio_state["energy_level"] = max(0.0, min(1.0, (ratio - 0.4) / 1.2))
-    else:
-        live_audio_state["energy_level"] = 0.5
-
-    # ── 5. ML-Inferenz ───────────────────────────────────────────────────────
-    if live_audio_state["ml_active"] and _mel_buffer is not None:
-        hop      = ml_config.HOP_LENGTH
-        combined = np.concatenate([_sample_remainder, mono])
-        idx      = 0
-        while idx + hop <= len(combined):
-            _mel_buffer.push_samples(combined[idx:idx + hop])
-            idx += hop
-        _sample_remainder = combined[idx:].copy()
-
-        # Inferenz-Thread starten wenn Buffer bereit und kein Thread laeuft
-        if (_inference_thread is None or not _inference_thread.is_alive()) \
-                and _mel_buffer.is_ready:
-            _inference_thread = threading.Thread(
-                target=_run_ml_inference, daemon=True
-            )
-            _inference_thread.start()
+def _ensure_engine() -> PLOEngine:
+    global _engine
+    if _engine is None:
+        _engine = PLOEngine()
+    return _engine
 
 
+def _bridge_loop() -> None:
+    """Pollt die Engine periodisch und schreibt in live_audio_state."""
+    global _engine
+    last_phrase = None
+    last_beat_in_bar = None
+    period = 1.0 / _BRIDGE_HZ
+
+    # Geglaettete Werte fuer ruhige Lampen-Ansteuerung
+    smooth = {
+        "energy_level": 0.5,   # konvergiert langsam, treibt energy_brightness
+        "volume":       0.0,
+        "level":        0.0,
+    }
+    # EMA-Faktoren bei 60 Hz Bridge-Rate
+    # 0.05 = ~250 ms Zeitkonstante (energy/dimmer), 0.25 = ~60 ms (Pegelmeter)
+    A_ENERGY = 0.05
+    A_PEAK   = 0.25
+
+    while not _bridge_stop.is_set():
+        time.sleep(period)
+        eng = _engine
+        if eng is None:
+            continue
+        snap = eng.snapshot()
+        n_beats      = eng.consume_beat_events()
+        n_transients = eng.consume_transient_events()
+
+        if n_beats > 0:
+            live_audio_state["beat_triggered"] = True
+        if n_transients > 0:
+            # ECHTE Hi-Band-Spikes (Claps/Synth) - keine kuenstlichen Beat-Wechsel
+            live_audio_state["transient_triggered"] = True
+
+        # Counter / Phase
+        live_audio_state["beat_index"]     = snap["beat_in_bar"]
+        live_audio_state["beat_in_bar"]    = snap["beat_in_bar"]
+        live_audio_state["beat_in_phrase"] = snap["beat_in_phrase"]
+        live_audio_state["bar_in_phrase"]  = snap["bar_in_phrase"]
+        live_audio_state["beat_phase"]     = round(snap["phase"], 4)
+
+        # Tempo / Status
+        live_audio_state["bpm"]           = round(snap["bpm"], 2)
+        live_audio_state["bpm_locked"]    = snap["bpm_locked"]
+        live_audio_state["bar_locked"]    = snap["bar_locked"]
+        live_audio_state["tempo_status"]  = snap["tempo_status"]
+        live_audio_state["mode"]          = snap["mode"]
+        live_audio_state["phase"]         = snap["phrase"]
+
+        # Geglaettete Pegel (60 ms Zeitkonstante) — verhindert VU-Meter-Zucken
+        peak = snap["input_peak"]
+        smooth["volume"] = (1 - A_PEAK) * smooth["volume"] + A_PEAK * min(peak * 1.5, 1.0)
+        smooth["level"]  = (1 - A_PEAK) * smooth["level"]  + A_PEAK * min(peak * 2.5, 1.0)
+        live_audio_state["volume"] = smooth["volume"]
+        live_audio_state["level"]  = smooth["level"]
+
+        # Energy-Level aus bias-korrigierter Ratio: musikalisch sinnvoll,
+        # Mid-Track ~1.0 -> 0.5, Drop ~1.6 -> 1.0, Break ~0.5 -> 0.08.
+        # Stark geglaettet (250 ms) damit Magic-Auto-Dimmer NICHT jeden
+        # Bridge-Tick wackelt → 'zucken' weg.
+        ratio  = snap.get("energy_ratio", 1.0)
+        target = max(0.0, min(1.0, (ratio - 0.4) / 1.2))
+        smooth["energy_level"] = (1 - A_ENERGY) * smooth["energy_level"] + A_ENERGY * target
+        live_audio_state["energy_level"] = smooth["energy_level"]
+
+        # last_beat_in_bar fuer evtl. zukuenftige Per-Bar-Logik beibehalten
+        if snap["beat_in_bar"] != last_beat_in_bar:
+            last_beat_in_bar = snap["beat_in_bar"]
+
+        if snap["phrase"] != last_phrase:
+            print(f"[audio_live] Phrase: {last_phrase or 'INIT'} -> {snap['phrase']}")
+            last_phrase = snap["phrase"]
+
+
+# -----------------------------------------------------------------------------
+# Public API
+# -----------------------------------------------------------------------------
 def start_listening(device_id):
-    global _stream, _kick_energy_history, _short_term_energy, _long_term_energy
-    global _high_energy_history, _last_transient_time
-    global _mel_buffer, _sample_remainder
+    """Startet Audio-Stream + PLO-Engine + Bridge-Thread."""
+    global _bridge_th
+    eng = _ensure_engine()
 
-    if _stream is not None:
+    if eng.is_running():
         stop_listening()
 
-    try:
-        dev_info = sd.query_devices(device_id)
-        channels = min(2, dev_info['max_input_channels'])
-
-        # State zuruecksetzen
-        _kick_energy_history[:] = 0
-        _short_term_energy[:]   = 0
-        _long_term_energy[:]    = 0
-        _high_energy_history[:] = 0
-        _last_transient_time    = 0.0
-        _sample_remainder       = np.zeros(0, dtype=np.float32)
-
-        # ML-Modell laden
-        ml_ok = _try_load_ml_model()
-        live_audio_state["ml_active"] = ml_ok
-        if ml_ok and _mel_buffer is not None:
-            _mel_buffer = RollingMelBuffer()  # frischer Buffer
-
-        live_audio_state["is_listening"]   = True
-        live_audio_state["device_id"]      = device_id
-        live_audio_state["phase"]          = "WAITING"
-        live_audio_state["beat_triggered"] = False
-
-        _stream = sd.InputStream(
-            device=device_id,
-            channels=channels,
-            samplerate=SAMPLE_RATE,   # 22050 Hz (ML-kompatibel)
-            blocksize=2048,
-            callback=_audio_callback,
-        )
-        _stream.start()
-
-        mode = "ML-Modell (BREAK/BUILDUP/DROP)" if ml_ok else "einfache RMS-Erkennung"
-        print(f"[audio_live] Stream gestartet @ {SAMPLE_RATE}Hz | Modus: {mode}")
-        return True, "Gestartet"
-
-    except Exception as e:
+    ok, msg = eng.start(int(device_id))
+    if not ok:
         live_audio_state["is_listening"] = False
-        live_audio_state["ml_active"]    = False
-        return False, str(e)
+        return False, msg
+
+    live_audio_state["is_listening"] = True
+    live_audio_state["device_id"]    = device_id
+    live_audio_state["phase"]        = "WAITING"
+    live_audio_state["beat_triggered"] = False
+    live_audio_state["bpm"]          = 120.0
+    live_audio_state["beat_count"]   = 0
+
+    _bridge_stop.clear()
+    _bridge_th = threading.Thread(target=_bridge_loop, daemon=True, name='audio-bridge')
+    _bridge_th.start()
+
+    print(f"[audio_live] Stream + PLO-Engine gestartet: {msg}")
+    return True, msg
 
 
 def stop_listening():
-    global _stream
+    """Beendet Bridge + Engine + Stream."""
+    global _bridge_th
     live_audio_state["is_listening"] = False
-    live_audio_state["ml_active"]    = False
-    if _stream:
-        _stream.stop()
-        _stream.close()
-        _stream = None
+
+    _bridge_stop.set()
+    if _bridge_th is not None:
+        _bridge_th.join(timeout=1.5)
+    _bridge_th = None
+
+    if _engine is not None:
+        _engine.stop()
+
+
+# -----------------------------------------------------------------------------
+# Mode + Manual-Kontrollen
+# -----------------------------------------------------------------------------
+def set_mode(mode: str) -> None:
+    """AUTO | MANUAL — schaltet zwischen Auto-Tracking und manueller BPM."""
+    eng = _ensure_engine()
+    eng.set_mode(mode)
+    live_audio_state["mode"] = mode
+
+
+def set_manual_bpm(bpm: float) -> None:
+    """Setzt die manuelle BPM (wird in MANUAL-Mode benutzt)."""
+    eng = _ensure_engine()
+    eng.set_manual_bpm(float(bpm))
+
+
+def mark_downbeat() -> None:
+    """'Das hier ist Beat 1.' — Phase + Bar-Offset werden so gesetzt
+    dass der aktuelle Moment als Beat 1 gilt."""
+    if _engine is not None:
+        _engine.mark_downbeat()
+
+
+def set_input_gain(gain: float) -> None:
+    """Software-Gain auf das Input-Signal (0..8)."""
+    if _engine is not None:
+        _engine.set_gain(gain)

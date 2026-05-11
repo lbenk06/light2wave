@@ -34,11 +34,11 @@
             "address": 1,
             "values": {
                 "red": 0.0,
-                "green": 1.0,
+                "green": 0.0,
                 "blue": 0.0,
                 "white": 0.0,
                 "strobe": 0.0,
-                "dimmer": 0.8458219273598883
+                "dimmer": 0.0
             },
             "traverse": "Front-Traverse",
             "snap_point_index": 14
@@ -51,11 +51,11 @@
             "address": 9,
             "values": {
                 "red": 0.0,
-                "green": 1.0,
+                "green": 0.0,
                 "blue": 0.0,
                 "white": 0.0,
                 "strobe": 0.0,
-                "dimmer": 0.8458219273598883
+                "dimmer": 0.0
             },
             "traverse": "Front-Traverse",
             "snap_point_index": 2
@@ -67,30 +67,14 @@
             "y": 240.0,
             "address": 20,
             "values": {
-                "dimmer": 0.8458219273598883,
+                "dimmer": 0.0,
                 "red": 0.0,
-                "green": 1.0,
+                "green": 0.0,
                 "blue": 0.0,
                 "strobe": 0.0
             },
             "traverse": "Front-Traverse",
             "snap_point_index": 6
-        },
-        {
-            "id": "par2",
-            "profile": "led_par_6ch",
-            "x": 700.0,
-            "y": 240.0,
-            "address": 30,
-            "values": {
-                "dimmer": 0.8458219273598883,
-                "red": 0.0,
-                "green": 1.0,
-                "blue": 0.0,
-                "strobe": 0.0
-            },
-            "traverse": "Front-Traverse",
-            "snap_point_index": 10
         },
         {
             "id": "laser1",
@@ -99,18 +83,34 @@
             "y": 160.0,
             "address": 36,
             "values": {
-                "laser_mode": 1.0,
-                "pattern": 0.0,
+                "laser_mode": 0.8823529411764706,
+                "pattern": 0.5803921568627451,
                 "x_pos": 0.0,
                 "y_pos": 0.0,
-                "speed": 0.0,
-                "laser_speed": 0.0,
-                "zoom": 0.0,
-                "laser_color": 0.0,
+                "speed": 0.8235294117647058,
+                "laser_speed": 0.8235294117647058,
+                "zoom": 0.7843137254901961,
+                "laser_color": 0.7764705882352941,
                 "color_segment": 0.0
             },
             "traverse": "Front-Traverse",
             "snap_point_index": 25
+        },
+        {
+            "id": "par2",
+            "profile": "led_par_6ch",
+            "x": 700.0,
+            "y": 240.0,
+            "address": 50,
+            "values": {
+                "dimmer": 1.0,
+                "red": 1.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "strobe": 0.0
+            },
+            "traverse": "Front-Traverse",
+            "snap_point_index": 10
         }
     ],
     "banks": [
@@ -154,7 +154,7 @@
                     "color": "#333333"
                 },
                 {
-                    "name": "alle gr\u00fcn",
+                    "name": "alle grÃ¼n",
                     "data": {
                         "fluter1": {
                             "red": 0.0,
@@ -188,6 +188,387 @@
                         }
                     },
                     "color": "#333333"
+                }
+            ]
+        },
+        {
+            "name": "House Set",
+            "scenes": [
+                {
+                    "name": "Underground Red",
+                    "data": {
+                        "fluter1": {
+                            "red": 1.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "strobe": 0.0,
+                            "dimmer": 0.7
+                        },
+                        "fluter2": {
+                            "red": 1.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "strobe": 0.0,
+                            "dimmer": 0.7
+                        },
+                        "par1": {
+                            "dimmer": 0.7,
+                            "red": 1.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "par2": {
+                            "dimmer": 0.7,
+                            "red": 1.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "laser1": {
+                            "laser_mode": 0.7,
+                            "pattern": 0.15,
+                            "x_pos": 0.0,
+                            "y_pos": 0.0,
+                            "speed": 0.5,
+                            "laser_speed": 0.0,
+                            "zoom": 0.4,
+                            "laser_color": 0.0,
+                            "color_segment": 1.0
+                        }
+                    },
+                    "color": "#7a0000"
+                },
+                {
+                    "name": "Acid Green",
+                    "data": {
+                        "fluter1": {
+                            "red": 0.2,
+                            "green": 1.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "strobe": 0.0,
+                            "dimmer": 0.85
+                        },
+                        "fluter2": {
+                            "red": 0.2,
+                            "green": 1.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "strobe": 0.0,
+                            "dimmer": 0.85
+                        },
+                        "par1": {
+                            "dimmer": 0.85,
+                            "red": 0.2,
+                            "green": 1.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "par2": {
+                            "dimmer": 0.85,
+                            "red": 0.2,
+                            "green": 1.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "laser1": {
+                            "laser_mode": 0.7,
+                            "pattern": 0.4,
+                            "x_pos": 0.0,
+                            "y_pos": 0.0,
+                            "speed": 0.5,
+                            "laser_speed": 0.0,
+                            "zoom": 0.6,
+                            "laser_color": 0.15,
+                            "color_segment": 1.0
+                        }
+                    },
+                    "color": "#1aaa1a"
+                },
+                {
+                    "name": "Cold Tech Cyan",
+                    "data": {
+                        "fluter1": {
+                            "red": 0.0,
+                            "green": 0.7,
+                            "blue": 1.0,
+                            "white": 0.0,
+                            "strobe": 0.0,
+                            "dimmer": 0.6
+                        },
+                        "fluter2": {
+                            "red": 0.0,
+                            "green": 0.7,
+                            "blue": 1.0,
+                            "white": 0.0,
+                            "strobe": 0.0,
+                            "dimmer": 0.6
+                        },
+                        "par1": {
+                            "dimmer": 0.6,
+                            "red": 0.0,
+                            "green": 0.7,
+                            "blue": 1.0,
+                            "strobe": 0.0
+                        },
+                        "par2": {
+                            "dimmer": 0.6,
+                            "red": 0.0,
+                            "green": 0.7,
+                            "blue": 1.0,
+                            "strobe": 0.0
+                        },
+                        "laser1": {
+                            "laser_mode": 0.7,
+                            "pattern": 0.2,
+                            "x_pos": 0.0,
+                            "y_pos": 0.0,
+                            "speed": 0.5,
+                            "laser_speed": 0.0,
+                            "zoom": 0.5,
+                            "laser_color": 0.55,
+                            "color_segment": 1.0
+                        }
+                    },
+                    "color": "#0099b8"
+                },
+                {
+                    "name": "Magenta Madness",
+                    "data": {
+                        "fluter1": {
+                            "red": 1.0,
+                            "green": 0.0,
+                            "blue": 0.7,
+                            "white": 0.0,
+                            "strobe": 0.0,
+                            "dimmer": 1.0
+                        },
+                        "fluter2": {
+                            "red": 1.0,
+                            "green": 0.0,
+                            "blue": 0.7,
+                            "white": 0.0,
+                            "strobe": 0.0,
+                            "dimmer": 1.0
+                        },
+                        "par1": {
+                            "dimmer": 1.0,
+                            "red": 1.0,
+                            "green": 0.0,
+                            "blue": 0.7,
+                            "strobe": 0.0
+                        },
+                        "par2": {
+                            "dimmer": 1.0,
+                            "red": 1.0,
+                            "green": 0.0,
+                            "blue": 0.7,
+                            "strobe": 0.0
+                        },
+                        "laser1": {
+                            "laser_mode": 0.7,
+                            "pattern": 0.5,
+                            "x_pos": 0.0,
+                            "y_pos": 0.0,
+                            "speed": 0.5,
+                            "laser_speed": 0.0,
+                            "zoom": 0.7,
+                            "laser_color": 0.7,
+                            "color_segment": 1.0
+                        }
+                    },
+                    "color": "#aa0080"
+                },
+                {
+                    "name": "Sunset Vibe",
+                    "data": {
+                        "fluter1": {
+                            "red": 1.0,
+                            "green": 0.4,
+                            "blue": 0.0,
+                            "white": 0.3,
+                            "strobe": 0.0,
+                            "dimmer": 0.7
+                        },
+                        "fluter2": {
+                            "red": 1.0,
+                            "green": 0.4,
+                            "blue": 0.0,
+                            "white": 0.3,
+                            "strobe": 0.0,
+                            "dimmer": 0.7
+                        },
+                        "par1": {
+                            "dimmer": 0.7,
+                            "red": 1.0,
+                            "green": 0.3,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "par2": {
+                            "dimmer": 0.7,
+                            "red": 1.0,
+                            "green": 0.3,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "laser1": {
+                            "laser_mode": 0.0,
+                            "pattern": 0.0,
+                            "x_pos": 0.0,
+                            "y_pos": 0.0,
+                            "speed": 0.0,
+                            "laser_speed": 0.0,
+                            "zoom": 0.0,
+                            "laser_color": 0.0,
+                            "color_segment": 0.0
+                        }
+                    },
+                    "color": "#cc5500"
+                },
+                {
+                    "name": "Berghain Minimal",
+                    "data": {
+                        "fluter1": {
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "white": 1.0,
+                            "strobe": 0.0,
+                            "dimmer": 0.15
+                        },
+                        "fluter2": {
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "white": 1.0,
+                            "strobe": 0.0,
+                            "dimmer": 0.15
+                        },
+                        "par1": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "par2": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "laser1": {
+                            "laser_mode": 0.0,
+                            "pattern": 0.0,
+                            "x_pos": 0.0,
+                            "y_pos": 0.0,
+                            "speed": 0.0,
+                            "laser_speed": 0.0,
+                            "zoom": 0.0,
+                            "laser_color": 0.0,
+                            "color_segment": 0.0
+                        }
+                    },
+                    "color": "#222222"
+                },
+                {
+                    "name": "Drop Color White",
+                    "data": {
+                        "fluter1": {
+                            "red": 1.0,
+                            "green": 1.0,
+                            "blue": 1.0,
+                            "white": 1.0,
+                            "strobe": 0.0,
+                            "dimmer": 1.0
+                        },
+                        "fluter2": {
+                            "red": 1.0,
+                            "green": 1.0,
+                            "blue": 1.0,
+                            "white": 1.0,
+                            "strobe": 0.0,
+                            "dimmer": 1.0
+                        },
+                        "par1": {
+                            "dimmer": 1.0,
+                            "red": 1.0,
+                            "green": 1.0,
+                            "blue": 1.0,
+                            "strobe": 0.0
+                        },
+                        "par2": {
+                            "dimmer": 1.0,
+                            "red": 1.0,
+                            "green": 1.0,
+                            "blue": 1.0,
+                            "strobe": 0.0
+                        },
+                        "laser1": {
+                            "laser_mode": 0.7,
+                            "pattern": 0.6,
+                            "x_pos": 0.0,
+                            "y_pos": 0.0,
+                            "speed": 0.5,
+                            "laser_speed": 0.0,
+                            "zoom": 0.9,
+                            "laser_color": 0.85,
+                            "color_segment": 1.0
+                        }
+                    },
+                    "color": "#ffffff"
+                },
+                {
+                    "name": "Blackout",
+                    "data": {
+                        "fluter1": {
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "strobe": 0.0,
+                            "dimmer": 0.0
+                        },
+                        "fluter2": {
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "white": 0.0,
+                            "strobe": 0.0,
+                            "dimmer": 0.0
+                        },
+                        "par1": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "par2": {
+                            "dimmer": 0.0,
+                            "red": 0.0,
+                            "green": 0.0,
+                            "blue": 0.0,
+                            "strobe": 0.0
+                        },
+                        "laser1": {
+                            "laser_mode": 0.0,
+                            "pattern": 0.0,
+                            "x_pos": 0.0,
+                            "y_pos": 0.0,
+                            "speed": 0.0,
+                            "laser_speed": 0.0,
+                            "zoom": 0.0,
+                            "laser_color": 0.0,
+                            "color_segment": 0.0
+                        }
+                    },
+                    "color": "#000000"
                 }
             ]
         }
@@ -395,7 +776,7 @@
             }
         },
         {
-            "name": "gr\u00fcnerblind",
+            "name": "grÃ¼nerblind",
             "type": "flash",
             "roles": {
                 "green": 1.0,
@@ -467,6 +848,291 @@
                 "target_role": "dimmer",
                 "speed": 2.0,
                 "width": 5.0
+            }
+        },
+        {
+            "name": "DROP HIT WEISS",
+            "type": "flash",
+            "roles": {
+                "dimmer": 1.0,
+                "white": 1.0,
+                "red": 1.0,
+                "green": 1.0,
+                "blue": 1.0
+            },
+            "params": {
+                "generator": "flash_decay",
+                "target_role": "dimmer",
+                "speed": 2.0,
+                "width": 0.5
+            }
+        },
+        {
+            "name": "DROP STROBE 16TH",
+            "type": "dynamic",
+            "roles": {
+                "red": 1.0,
+                "green": 1.0,
+                "blue": 1.0,
+                "white": 1.0
+            },
+            "params": {
+                "generator": "strobe",
+                "target_role": "dimmer",
+                "speed": 16.0,
+                "width": 0.05
+            }
+        },
+        {
+            "name": "DROP SLAM ROT",
+            "type": "static",
+            "roles": {
+                "red": 1.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "white": 0.0,
+                "dimmer": 1.0
+            }
+        },
+        {
+            "name": "DROP CHASE ORANGE",
+            "type": "dynamic",
+            "roles": {
+                "red": 1.0,
+                "green": 0.35,
+                "blue": 0.0,
+                "white": 0.0
+            },
+            "params": {
+                "generator": "hard_chase",
+                "target_role": "dimmer",
+                "speed": 4.0,
+                "width": 4.0
+            }
+        },
+        {
+            "name": "DROP RADAR MAGENTA",
+            "type": "dynamic",
+            "roles": {
+                "red": 1.0,
+                "green": 0.0,
+                "blue": 0.6
+            },
+            "params": {
+                "generator": "radar",
+                "target_role": "dimmer",
+                "speed": 2.5,
+                "width": 3.0
+            }
+        },
+        {
+            "name": "BUILD HEARTBEAT WEISS",
+            "type": "dynamic",
+            "roles": {
+                "red": 1.0,
+                "green": 1.0,
+                "blue": 1.0,
+                "white": 1.0
+            },
+            "params": {
+                "generator": "heartbeat",
+                "target_role": "dimmer",
+                "speed": 2.0
+            }
+        },
+        {
+            "name": "BUILD SCANNER LILA",
+            "type": "dynamic",
+            "roles": {
+                "red": 0.5,
+                "green": 0.0,
+                "blue": 1.0
+            },
+            "params": {
+                "generator": "scanner",
+                "target_role": "dimmer",
+                "speed": 4.0,
+                "width": 3.0
+            }
+        },
+        {
+            "name": "BUILD GROW WEISS",
+            "type": "dynamic",
+            "roles": {
+                "red": 1.0,
+                "green": 1.0,
+                "blue": 1.0,
+                "white": 1.0
+            },
+            "params": {
+                "generator": "breathing",
+                "target_role": "dimmer",
+                "speed": 3.0,
+                "width": 2.0
+            }
+        },
+        {
+            "name": "BUILD GATE BLAU",
+            "type": "dynamic",
+            "roles": {
+                "red": 0.0,
+                "green": 0.3,
+                "blue": 1.0
+            },
+            "params": {
+                "generator": "gate_pulse",
+                "target_role": "dimmer",
+                "speed": 5.0,
+                "width": 6.0
+            }
+        },
+        {
+            "name": "BREAK PLASMA BLAU",
+            "type": "dynamic",
+            "roles": {
+                "red": 0.0,
+                "green": 0.2,
+                "blue": 1.0,
+                "dimmer": 0.6
+            },
+            "params": {
+                "generator": "plasma",
+                "target_role": "dimmer",
+                "speed": 1.0,
+                "width": 4.0
+            }
+        },
+        {
+            "name": "BREAK SPARKLE MAGENTA",
+            "type": "dynamic",
+            "roles": {
+                "red": 1.0,
+                "green": 0.0,
+                "blue": 0.7
+            },
+            "params": {
+                "generator": "sparkle",
+                "target_role": "dimmer",
+                "speed": 0.3,
+                "width": 1.0
+            }
+        },
+        {
+            "name": "BREAK WAVE LILA",
+            "type": "dynamic",
+            "roles": {
+                "red": 0.6,
+                "green": 0.0,
+                "blue": 1.0,
+                "dimmer": 0.5
+            },
+            "params": {
+                "generator": "linear_wave",
+                "target_role": "dimmer",
+                "speed": 0.8,
+                "width": 6.0
+            }
+        },
+        {
+            "name": "BREAK BREATH ROT",
+            "type": "dynamic",
+            "roles": {
+                "red": 1.0,
+                "green": 0.0,
+                "blue": 0.0,
+                "dimmer": 0.4
+            },
+            "params": {
+                "generator": "breathing",
+                "target_role": "dimmer",
+                "speed": 0.6,
+                "width": 1.0
+            }
+        },
+        {
+            "name": "LASER ON STATIC",
+            "type": "static",
+            "roles": {
+                "laser_mode": 0.7,
+                "pattern": 0.3,
+                "x_pos": 0.0,
+                "y_pos": 0.0,
+                "speed": 0.5,
+                "laser_speed": 0.0,
+                "zoom": 0.5,
+                "laser_color": 0.7,
+                "color_segment": 1.0
+            }
+        },
+        {
+            "name": "LASER DROP MIX",
+            "type": "static",
+            "roles": {
+                "laser_mode": 0.9,
+                "pattern": 0.5,
+                "x_pos": 0.0,
+                "y_pos": 0.0,
+                "speed": 0.9,
+                "laser_speed": 0.95,
+                "zoom": 0.8,
+                "laser_color": 0.85,
+                "color_segment": 1.0
+            }
+        },
+        {
+            "name": "LASER SLOW BLAU",
+            "type": "static",
+            "roles": {
+                "laser_mode": 0.7,
+                "pattern": 0.15,
+                "x_pos": 0.0,
+                "y_pos": 0.0,
+                "speed": 0.2,
+                "laser_speed": 0.0,
+                "zoom": 0.3,
+                "laser_color": 0.3,
+                "color_segment": 0.0
+            }
+        },
+        {
+            "name": "LASER OFF",
+            "type": "static",
+            "roles": {
+                "laser_mode": 0.0
+            }
+        },
+        {
+            "name": "TOTAL BANGER",
+            "type": "dynamic",
+            "roles": {
+                "red": 1.0,
+                "green": 1.0,
+                "blue": 1.0,
+                "white": 1.0,
+                "laser_mode": 0.9,
+                "pattern": 0.5,
+                "speed": 1.0,
+                "laser_speed": 1.0,
+                "zoom": 0.9,
+                "laser_color": 0.85,
+                "color_segment": 1.0
+            },
+            "params": {
+                "generator": "strobe",
+                "target_role": "dimmer",
+                "speed": 8.0,
+                "width": 0.1
+            }
+        },
+        {
+            "name": "FULL WHITE",
+            "type": "static",
+            "roles": {
+                "red": 1.0,
+                "green": 1.0,
+                "blue": 1.0,
+                "white": 1.0,
+                "dimmer": 1.0
             }
         }
     ],

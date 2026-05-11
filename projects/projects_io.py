@@ -5,7 +5,34 @@ from fixtures.profiles import ALL_PROFILES
 def save_project(engine, filename, events=None, dmx_port=None):
     """
     Speichert das gesamte Projekt inkl. Traverses, Fixtures, Szenen, Events und DMX-Port.
+
+    events / dmx_port werden bewusst beibehalten wenn sie nicht uebergeben werden —
+    sonst loescht jeder Teil-Save (Fixture verschoben, Szene gespeichert, ...) die
+    Events und den DMX-Port aus der Datei.
     """
+    # Bestehende Werte aus Datei laden — werden nur ueberschrieben wenn explizit gesetzt
+    existing_events = []
+    existing_dmx_port = ""
+    import os
+    if os.path.exists(filename):
+        try:
+            with open(filename, 'r') as fh:
+                existing = json.load(fh)
+            existing_events   = existing.get("events", [])
+            existing_dmx_port = existing.get("dmx_port", "")
+        except Exception:
+            pass
+
+    if events is not None:
+        events_payload = [e.data for e in events]
+    else:
+        events_payload = existing_events
+
+    if dmx_port is not None:
+        dmx_port_payload = dmx_port
+    else:
+        dmx_port_payload = existing_dmx_port
+
     project_dict = {
         "traverses": [
             {"name": t.name, "x1": t.x1, "y1": t.y1, "x2": t.x2, "y2": t.y2, "snap_distance": t.snap_distance}
@@ -13,8 +40,8 @@ def save_project(engine, filename, events=None, dmx_port=None):
         ],
         "fixtures": [],
         "banks": getattr(engine, "banks", []),
-        "events": [e.data for e in (events or [])],
-        "dmx_port": dmx_port or "",
+        "events": events_payload,
+        "dmx_port": dmx_port_payload,
     }
 
     for f in engine.fixtures:

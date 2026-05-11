@@ -104,12 +104,13 @@ class RollingMelBuffer:
         )[:, 0]) ** 2
 
         mel_frame = librosa.feature.melspectrogram(
-            S=spectrum[np.newaxis, :],
+            S=spectrum[:, np.newaxis],  # (freq_bins, 1) — librosa erwartet (freq, frames)
             sr=config.SAMPLE_RATE,
+            n_fft=config.N_FFT,        # explizit: verhindert n_fft=0 Inferenz-Bug
             n_mels=config.N_MELS,
             fmin=config.F_MIN,
             fmax=config.F_MAX,
-        )[0]
+        )[:, 0]
         mel_db = librosa.power_to_db(mel_frame[np.newaxis], ref=1.0)[0]
         mel_db = (mel_db / 80.0).clip(-1.0, 1.0)
 
